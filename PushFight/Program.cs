@@ -19,14 +19,15 @@ namespace PushFight
                 {
                     var cell = game.Board[x, y];
                     Console.ForegroundColor = cell.Contents.Team == Team.None ? ConsoleColor.DarkGray : cell.Contents.Team == Team.Black ? ConsoleColor.Black : ConsoleColor.White;
+                    var cellColor = ConsoleColor.DarkGreen; // fixme change to darkyellow if cell is hilighted
 
                     if (cell.Contents.Team != Team.None)
                     {
-                        Console.BackgroundColor = ConsoleColor.DarkYellow;
+                        Console.BackgroundColor = cellColor;
                         Console.Write(cell.Contents.Type == PawnType.Empty ? " " : cell.Contents.Type == PawnType.Square ? "■" : "o");
                     } else
                     {
-                        Console.ForegroundColor = ConsoleColor.DarkYellow;
+                        Console.ForegroundColor = cellColor;
                         Console.Write(cell.BoardType == CellType.Solid ? "█" : cell.BoardType == CellType.Wall ? "│" : " ");
                     }
 
