@@ -18,14 +18,16 @@ namespace PushFight
                 for (int x = 0; x < game.Board.GetLength(0); x++)
                 {
                     var cell = game.Board[x, y];
-                    Console.ForegroundColor = cell.Contents.Team == Team.None ? ConsoleColor.DarkGray : cell.Contents.Team == Team.Black ? ConsoleColor.Red : ConsoleColor.Blue;
+                    Console.ForegroundColor = cell.Contents.Team == Team.None ? ConsoleColor.DarkGray : cell.Contents.Team == Team.Black ? ConsoleColor.Black : ConsoleColor.White;
+                    var cellColor = ConsoleColor.DarkGreen; // fixme change to darkyellow if cell is hilighted
 
                     if (cell.Contents.Team != Team.None)
                     {
-                        Console.BackgroundColor = ConsoleColor.DarkGray;
+                        Console.BackgroundColor = cellColor;
                         Console.Write(cell.Contents.Type == PawnType.Empty ? " " : cell.Contents.Type == PawnType.Square ? "■" : "o");
                     } else
                     {
+                        Console.ForegroundColor = cellColor;
                         Console.Write(cell.BoardType == CellType.Solid ? "█" : cell.BoardType == CellType.Wall ? "│" : " ");
                     }
 
@@ -50,8 +52,8 @@ namespace PushFight
 
             while (true)
             {
-                Console.ForegroundColor = team == Team.Black ? ConsoleColor.Red : ConsoleColor.Blue;
-                Console.Write("> ");
+                Console.ForegroundColor = team == Team.Black ? ConsoleColor.DarkGray : ConsoleColor.White;
+                Console.Write(team + "> ");
                 var cmd = Console.ReadLine();
                 Console.ResetColor();
 
