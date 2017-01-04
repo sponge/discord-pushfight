@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PushFight
 {
     class Cell
     {
-
         public int x, y;
         public CellType BoardType;
         public Pawn Contents;
