@@ -53,6 +53,11 @@ namespace PushFight
             }
         }
 
+        public void ClearContents()
+        {
+             Contents = new Pawn(Team.None, PawnType.Empty);
+        }
+
         public List<Cell> Sweep(Direction dir)
         {
             var res = new List<Cell>();
@@ -78,6 +83,19 @@ namespace PushFight
             // set anchor and remove old anchor
 
             return ECode.Success;
+        }
+
+        public List<Cell> ConnectedCells()
+        {
+            // FIXME: implement me, return list of all cells this cell is connected to (can be used to preview valid movements)
+            var res = new List<Cell>();
+            return res;
+        }
+
+        public bool IsConnectedTo(int x, int y)
+        {
+            // FIXME: implement me, check if this cell is connected to the new cell through orthogonal movements (flood fill?)
+            return true;
         }
     }
 }

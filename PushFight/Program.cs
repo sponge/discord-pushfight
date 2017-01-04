@@ -1,6 +1,4 @@
-﻿//#define AUTO_PLACEMENT
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -46,29 +44,6 @@ namespace PushFight
 
             var game = new PushFightGame();
 
-#if AUTO_PLACEMENT
-            var cmds = new List<string>
-            {
-                "place round a4",
-                "place round a5",
-                "place square b4",
-                "place square b5",
-                "place round c4",
-                "place round c5",
-                "place square d4",
-                "place square d5",
-                "place square c3",
-                "place square c6",
-            };
-
-            foreach (var cmd in cmds)
-            {
-                var ecode = game.Input(cmd, game.CurrentTeam);
-                Debug.Assert(ecode == ECode.Success);
-                GamePrinter.Print(game);
-            }
-#endif
-
             var team = game.CurrentTeam;
 
             GamePrinter.Print(game);
@@ -83,6 +58,31 @@ namespace PushFight
                 if (cmd == "quit")
                 {
                     break;
+                }
+
+                if (cmd == "auto")
+                {
+                    var cmds = new List<string>
+                    {
+                        "place round a4",
+                        "place round a5",
+                        "place square b4",
+                        "place square b5",
+                        "place round c4",
+                        "place round c5",
+                        "place square d4",
+                        "place square d5",
+                        "place square c3",
+                        "place square c6",
+                    };
+
+                    foreach (var autocmd in cmds)
+                    {
+                        var ecode = game.Input(autocmd, game.CurrentTeam);
+                        Debug.Assert(ecode == ECode.Success);
+                        GamePrinter.Print(game);
+                    }
+                    continue;
                 }
 
                 if (cmd == "switch")

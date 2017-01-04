@@ -24,6 +24,7 @@ namespace PushFight
         InvalidPushStart,
         CellNotEmpty,
         NoMoreMoves,
+        CellNotConnected,
         InputUnknownCommand,
         InputBadPawnType,
         InputBadCell,
@@ -82,7 +83,7 @@ namespace PushFight
     class PushFightGame
     {
 
-        public List<RemainingPieces> remainingPieces = new List<RemainingPieces>() 
+        public List<RemainingPieces> RemainingPieces = new List<RemainingPieces>() 
         {
             new RemainingPieces(Team.Black, PawnType.Round, 2),
             new RemainingPieces(Team.Black, PawnType.Square, 3),
@@ -123,12 +124,17 @@ namespace PushFight
             var checker = new ConditionalValidator(new ValidatorChecks() {
                 { () => { return Phase != GamePhase.Push; }, ECode.WrongPhase },
                 { () => { return team != CurrentTeam; }, ECode.WrongTeam },
+                { () => { return RemainingMoves == 0; }, ECode.NoMoreMoves },
                 { () => { return x <= 0 || x >= 5; }, ECode.InvalidLocation },
                 { () => { return y < 0 || y > 9; }, ECode.InvalidLocation },
-                { () => { return RemainingMoves == 0; }, ECode.NoMoreMoves },
                 { () => { return Board[x,y].Contents.Type == PawnType.Empty; }, ECode.CellIsEmpty },
-                { () => { return Board[x, y].Contents.Team != CurrentTeam; }, ECode.WrongTeam },
-                // more checks go here
+                { () => { return Board[x,y].Contents.Team != CurrentTeam; }, ECode.WrongTeam },
+
+                { () => { return nx <= 0 || nx >= 5; }, ECode.InvalidLocation },
+                { () => { return ny < 0 || ny > 9; }, ECode.InvalidLocation },
+                { () => { return Board[nx,ny].BoardType == CellType.Void; }, ECode.InvalidLocation },
+                { () => { return Board[nx,ny].Contents.Type != PawnType.Empty; }, ECode.CellNotEmpty },
+                { () => { return Board[x,y].IsConnectedTo(nx, ny) == false; }, ECode.CellNotConnected },
             });
             var ecode = checker.Run();
 
@@ -138,13 +144,18 @@ namespace PushFight
             }
 
             var cell = Board[x, y];
+            var newCell = Board[nx, ny];
+
+            newCell.Contents = cell.Contents;
+            cell.ClearContents();
+            RemainingMoves -= 1;
 
             return ECode.Success;
         }
 
         public ECode ValidatedPlace(int x, int y, Team team, PawnType pawn)
         {
-            var remaining = (from rem in remainingPieces where rem.Team == team && rem.PawnType == pawn select rem).First();
+            var remaining = (from rem in RemainingPieces where rem.Team == team && rem.PawnType == pawn select rem).First();
 
             var checker = new ConditionalValidator(new ValidatorChecks() {
                 { () => { return Phase != GamePhase.Placement; }, ECode.WrongPhase },
@@ -169,7 +180,7 @@ namespace PushFight
             remaining.Count -= 1;
             CurrentTeam = CurrentTeam == Team.White ? Team.Black : Team.White;
 
-            var piecesLeft = (from rem in remainingPieces select rem.Count).Sum();
+            var piecesLeft = (from rem in RemainingPieces select rem.Count).Sum();
 
             if (piecesLeft == 0)
             {
@@ -218,22 +229,46 @@ namespace PushFight
         {
             var cmd = input.Split(' ');
 
-            if (cmd[0] == "place")
+            switch (cmd[0])
             {
-                var pawn = Parsers.Pawn(cmd[1]);
-                if (pawn == PawnType.Empty)
-                {
-                    return ECode.InputBadPawnType;
-                }
-                var x = Parsers.X(cmd[2]);
-                var y = Parsers.Y(cmd[2]);
+                case "place":
+                    {
+                        var pawn = Parsers.Pawn(cmd[1]);
+                        if (pawn == PawnType.Empty)
+                        {
+                            return ECode.InputBadPawnType;
+                        }
+                        var x = Parsers.X(cmd[2]);
+                        var y = Parsers.Y(cmd[2]);
 
-                if (x == -1 || y == -1)
-                {
-                    return ECode.InputBadCell;
-                }
+                        if (x == -1 || y == -1)
+                        {
+                            return ECode.InputBadCell;
+                        }
 
-                return ValidatedPlace(x, y, team, pawn);
+                        return ValidatedPlace(x, y, team, pawn);
+                    }
+
+                case "mv":
+                case "move":
+                    {
+                        var x = Parsers.X(cmd[1]);
+                        var y = Parsers.Y(cmd[1]);
+
+                        var nx = Parsers.X(cmd[2]);
+                        var ny = Parsers.Y(cmd[2]);
+
+                        if ( x == -1 || y == -1 || nx == -1 || ny == -1)
+                        {
+                            return ECode.InputBadCell;
+                        }
+
+                        return ValidatedMove(x, y, nx, ny, team);
+                    }
+
+                default:
+                    return ECode.InputUnknownCommand;
+
             }
 
             return ECode.InputUnknownCommand;
