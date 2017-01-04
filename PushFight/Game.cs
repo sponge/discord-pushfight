@@ -13,7 +13,21 @@ namespace PushFight
     public enum CellType : byte { Void, Solid, Wall };
     public enum Direction : byte { Up, Down, Left, Right };
     public enum GamePhase : byte { Placement, Push, Complete };
-    public enum ECode : byte { Success, InvalidLocation, WrongTeam, WrongPhase, NotEnoughPieces, WrongHalf, CellIsEmpty, InvalidPushStart, CellNotEmpty, NoMoreMoves };
+    public enum ECode : byte {
+        Success,
+        InvalidLocation,
+        WrongTeam,
+        WrongPhase,
+        NotEnoughPieces,
+        WrongHalf,
+        CellIsEmpty,
+        InvalidPushStart,
+        CellNotEmpty,
+        NoMoreMoves,
+        InputUnknownCommand,
+        InputBadPawnType,
+        InputBadCell,
+    };
 
     struct Pawn
     {
@@ -106,50 +120,42 @@ namespace PushFight
 
         public ECode ValidatedMove(int x, int y, int nx, int ny, Team team)
         {
-            if (Phase != GamePhase.Push)
-            {
-                return ECode.WrongPhase;
-            }
+            var checker = new ConditionalValidator(new ValidatorChecks() {
+                { () => { return Phase != GamePhase.Push; }, ECode.WrongPhase },
+                { () => { return team != CurrentTeam; }, ECode.WrongTeam },
+                { () => { return x <= 0 || x >= 5; }, ECode.InvalidLocation },
+                { () => { return y < 0 || y > 9; }, ECode.InvalidLocation },
+                { () => { return RemainingMoves == 0; }, ECode.NoMoreMoves },
+                { () => { return Board[x,y].Contents.Type == PawnType.Empty; }, ECode.CellIsEmpty },
+                { () => { return Board[x, y].Contents.Team != CurrentTeam; }, ECode.WrongTeam },
+                // more checks go here
+            });
+            var ecode = checker.Run();
 
-            if (team != CurrentTeam)
+            if (ecode != ECode.Success)
             {
-                return ECode.WrongTeam;
-            }
-
-            if (RemainingMoves == 0)
-            {
-                return ECode.NoMoreMoves;
+                return ecode;
             }
 
             var cell = Board[x, y];
-
-            if (cell.Contents.Team == Team.None)
-            {
-                return ECode.CellIsEmpty;
-            }
-
-            // more checks go here
 
             return ECode.Success;
         }
 
         public ECode ValidatedPlace(int x, int y, Team team, PawnType pawn)
         {
-            ConditionalValidator checker;
-            ECode ecode = ECode.Success;
-
             var remaining = (from rem in remainingPieces where rem.Team == team && rem.PawnType == pawn select rem).First();
 
-            // FIXME bounds checking
-            checker = new ConditionalValidator(new ValidatorChecks() {
+            var checker = new ConditionalValidator(new ValidatorChecks() {
                 { () => { return Phase != GamePhase.Placement; }, ECode.WrongPhase },
                 { () => { return team != CurrentTeam; }, ECode.WrongTeam },
-                { () => { return x == 0 || x == 5; }, ECode.InvalidLocation },
+                { () => { return x <= 0 || x >= 5; }, ECode.InvalidLocation },
+                { () => { return y < 0 || y > 9; }, ECode.InvalidLocation },
                 { () => { return (team == Team.White && y > 4) || (team == Team.Black && y < 5); }, ECode.WrongHalf },
                 { () => { return remaining.Count == 0; }, ECode.NotEnoughPieces },
                 { () => { return Board[x,y].Contents.Type != PawnType.Empty; }, ECode.CellNotEmpty },
             });
-            ecode = checker.Run();
+            var ecode = checker.Run();
 
             if (ecode != ECode.Success)
             {
@@ -176,11 +182,11 @@ namespace PushFight
             ConditionalValidator checker;
             ECode ecode = ECode.Success;
 
-            // FIXME bounds checking
             checker = new ConditionalValidator(new ValidatorChecks() {
                 { () => { return Phase != GamePhase.Push; }, ECode.WrongPhase },
                 { () => { return team != CurrentTeam; }, ECode.WrongTeam },
-                { () => { return x == 0 || x == 5; }, ECode.InvalidLocation },
+                { () => { return x <= 0 || x >= 5; }, ECode.InvalidLocation },
+                { () => { return y < 0 || y > 9; }, ECode.InvalidLocation },
                 { () => { return (team == Team.White && y > 4) || (team == Team.Black && y < 5); }, ECode.WrongHalf },
                 { () => { return Board[x, y].Contents.Team == Team.None; }, ECode.CellIsEmpty },
                 { () => { return Board[x, y].Contents.Type != PawnType.Square; }, ECode.InvalidPushStart },
@@ -206,11 +212,60 @@ namespace PushFight
             return ECode.Success;
         }
 
-        public ECode Input(string input)
+        public ECode Input(string input, Team team)
         {
-            Console.WriteLine(input);
+            var cmd = input.Split(' ');
 
-            return ECode.Success;
+            if (cmd[0] == "place")
+            {
+                var pawn = Parsers.Pawn(cmd[1]);
+                if (pawn == PawnType.Empty)
+                {
+                    return ECode.InputBadPawnType;
+                }
+                var x = Parsers.X(cmd[2]);
+                var y = Parsers.Y(cmd[2]);
+
+                if (x == -1 || y == -1)
+                {
+                    return ECode.InputBadCell;
+                }
+
+                return ValidatedPlace(x, y, team, pawn);
+            }
+
+            return ECode.InputUnknownCommand;
+        }
+    }
+
+    class Parsers
+    {
+        public static int X(string pair)
+        {
+            var res = (int)pair[0];
+            if (res < 'a' || res > 'd')
+            {
+                return -1;
+            }
+            return res - 96;
+        }
+
+        public static PawnType Pawn(string pawn)
+        {
+            var s_pawnType = pawn.ToLower();
+            return s_pawnType == "round" ? PawnType.Round : s_pawnType == "square" ? PawnType.Square : PawnType.Empty;
+        }
+
+        public static int Y(string pair)
+        {
+            Int32 res = -1;
+            var success = Int32.TryParse(pair.Substring(1), out res);
+            if (!success)
+            {
+                return -1;
+            }
+
+            return res;
         }
     }
 }

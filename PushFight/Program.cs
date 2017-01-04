@@ -1,4 +1,6 @@
-﻿using System;
+﻿//#define AUTO_PLACEMENT
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -7,26 +9,14 @@ using System.Threading.Tasks;
 
 namespace PushFight
 {
-    class LocMap
-    {
-        public LocMap(int x, int y, Team team, PawnType pawn)
-        {
-            this.x = x;
-            this.y = y;
-            this.team = team;
-            this.pawn = pawn;
-        }
-        public int x, y;
-        public Team team;
-        public PawnType pawn;
-    }
-
     class GamePrinter
     {
         static public void Print(PushFightGame game)
         {
-            for (int y = 0; y < game.Board.GetLength(1); y++)
+            Console.WriteLine("  abcd");
+            for (int y = 1; y < game.Board.GetLength(1) - 1; y++)
             {
+                Console.Write(y);
                 for (int x = 0; x < game.Board.GetLength(0); x++)
                 {
                     var cell = game.Board[x, y];
@@ -56,38 +46,53 @@ namespace PushFight
 
             var game = new PushFightGame();
 
-            var pieces = new List<LocMap>
+#if AUTO_PLACEMENT
+            var cmds = new List<string>
             {
-                new LocMap(1, 4, Team.White, PawnType.Round),
-                new LocMap(1, 5, Team.Black, PawnType.Round),
-                new LocMap(2, 4, Team.White, PawnType.Square),
-                new LocMap(2, 5, Team.Black, PawnType.Square),
-                new LocMap(3, 4, Team.White, PawnType.Round),
-                new LocMap(3, 5, Team.Black, PawnType.Round),
-                new LocMap(4, 4, Team.White, PawnType.Square),
-                new LocMap(4, 5, Team.Black, PawnType.Square),
-                new LocMap(3, 3, Team.White, PawnType.Square),
-                new LocMap(3, 6, Team.Black, PawnType.Square),
+                "place round a4",
+                "place round a5",
+                "place square b4",
+                "place square b5",
+                "place round c4",
+                "place round c5",
+                "place square d4",
+                "place square d5",
+                "place square c3",
+                "place square c6",
             };
 
-            foreach (var piece in pieces)
+            foreach (var cmd in cmds)
             {
-                var ecode = game.ValidatedPlace(piece.x, piece.y, piece.team, piece.pawn);
+                var ecode = game.Input(cmd, game.CurrentTeam);
                 Debug.Assert(ecode == ECode.Success);
                 GamePrinter.Print(game);
             }
+#endif
+
+            var team = game.CurrentTeam;
 
             while (true)
             {
+                Console.ForegroundColor = team == Team.Black ? ConsoleColor.Red : ConsoleColor.Blue;
                 Console.Write("> ");
                 var cmd = Console.ReadLine();
+                Console.ResetColor();
 
                 if (cmd == "quit")
                 {
                     break;
                 }
 
-                game.Input(cmd);
+                if (cmd == "switch")
+                {
+                    team = team == Team.White ? Team.Black : Team.White;
+                    continue;
+                }
+
+                var result = game.Input(cmd, team);
+                Console.WriteLine(result);
+                team = game.CurrentTeam;
+
                 GamePrinter.Print(game);
             }
 
