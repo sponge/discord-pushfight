@@ -62,7 +62,6 @@ namespace PushFight
             var cell = GetType().GetProperty(dirStr).GetValue(this, null) as Cell;
             while (cell != null)
             {
-                Console.WriteLine(x + "," + y);
                 res.Add(cell);
                 cell = GetType().GetProperty(dirStr).GetValue(cell, null) as Cell;
             }
@@ -75,6 +74,8 @@ namespace PushFight
             var sweep = Sweep(dir);
 
             // need a whole lot of checks here
+
+            // set anchor and remove old anchor
 
             return ECode.Success;
         }
