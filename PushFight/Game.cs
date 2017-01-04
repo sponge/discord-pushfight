@@ -225,9 +225,19 @@ namespace PushFight
             return ECode.Success;
         }
 
+        private void ResetHighlight()
+        {
+            foreach(Cell cell in Board)
+            {
+                cell.Highlight = false;
+            }
+        }
+
         public ECode Input(string input, Team team)
         {
             var cmd = input.Split(' ');
+
+            ResetHighlight();
 
             switch (cmd[0])
             {
@@ -254,6 +264,12 @@ namespace PushFight
                     {
                         var x = Parsers.X(cmd[1]);
                         var y = Parsers.Y(cmd[1]);
+
+                        if (cmd.Length == 2)
+                        {
+                            Board[x, y].ConnectedCells().ForEach(cell => cell.Highlight = true);
+                            return ECode.Success;
+                        }
 
                         var nx = Parsers.X(cmd[2]);
                         var ny = Parsers.Y(cmd[2]);

@@ -19,7 +19,7 @@ namespace PushFight
                 {
                     var cell = game.Board[x, y];
                     Console.ForegroundColor = cell.Contents.Team == Team.None ? ConsoleColor.DarkGray : cell.Contents.Team == Team.Black ? ConsoleColor.Black : ConsoleColor.White;
-                    var cellColor = ConsoleColor.DarkGreen; // fixme change to darkyellow if cell is hilighted
+                    var cellColor = cell.Highlight ? ConsoleColor.DarkYellow : ConsoleColor.DarkGreen;
 
                     if (cell.Contents.Team != Team.None)
                     {
