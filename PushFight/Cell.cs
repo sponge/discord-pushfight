@@ -14,6 +14,7 @@ namespace PushFight
         public Pawn Contents;
         public bool Anchored;
         public PushFightGame Game;
+        public bool Highlight = false;
 
         public Cell(PushFightGame game, int x, int y)
         {
@@ -25,50 +26,40 @@ namespace PushFight
             Game = game;
         }
 
-        public Cell Up {
-            get {
-                if (y == 0) { return null; }
-                return Game.Board[x, y - 1];
-            }
-        }
-
-        public Cell Down {
-            get {
-                if (y == Game.Board.GetLength(1) - 1) { return null; }
-                return Game.Board[x, y + 1];
-            }
-        }
-
-        public Cell Left {
-            get {
-                if (x == 0) { return null; }
-                return Game.Board[x - 1, y];
-            }
-        }
-
-        public Cell Right {
-            get {
-                if (x == Game.Board.GetLength(0) - 1) { return null; }
-                return Game.Board[x + 1, y];
-            }
-        }
-
         public void ClearContents()
         {
              Contents = new Pawn(Team.None, PawnType.Empty);
+        }
+
+        public Cell GetNextCell(Direction dir)
+        {
+            switch (dir)
+            {
+                case Direction.Up:
+                    if (y == 0) { return null; }
+                    return Game.Board[x, y - 1];
+                case Direction.Down:
+                    if (y == Game.Board.GetLength(1) - 1) { return null; }
+                    return Game.Board[x, y + 1];
+                case Direction.Left:
+                    if (x == 0) { return null; }
+                    return Game.Board[x - 1, y];
+                case Direction.Right:
+                    if (x == Game.Board.GetLength(0) - 1) { return null; }
+                    return Game.Board[x + 1, y];
+            }
+            return this;
         }
 
         public List<Cell> Sweep(Direction dir)
         {
             var res = new List<Cell>();
 
-            var dirStr = dir == Direction.Up ? "Up" : dir == Direction.Left ? "Left" : dir == Direction.Right ? "Right" : "Down";
-
-            var cell = GetType().GetProperty(dirStr).GetValue(this, null) as Cell;
+            var cell = this.GetNextCell(dir);
             while (cell != null)
             {
                 res.Add(cell);
-                cell = GetType().GetProperty(dirStr).GetValue(cell, null) as Cell;
+                cell = cell.GetNextCell(dir);
             }
 
             return res;
@@ -87,15 +78,44 @@ namespace PushFight
 
         public List<Cell> ConnectedCells()
         {
-            // FIXME: implement me, return list of all cells this cell is connected to (can be used to preview valid movements)
-            var res = new List<Cell>();
+            List<Cell> res = new List<Cell>();
+
+            Queue<Cell> cellQueue = new Queue<Cell>();
+            cellQueue.Enqueue(this);
+
+            while (cellQueue.Count > 0)
+            {
+                Cell currentCell = cellQueue.Dequeue();
+                if (!res.Contains(currentCell))
+                {
+                    res.Add(currentCell);
+                    // check for a cell in each direction and queue it if it's a valid move
+                    foreach (Direction dir in Enum.GetValues(typeof(Direction)))
+                    {
+                        Cell nextCell = currentCell.GetNextCell(dir);
+                        if (nextCell != null && ValidMove(nextCell))
+                        {
+                            cellQueue.Enqueue(nextCell);
+                        }
+                    }
+                }
+            }
+
             return res;
+        }
+
+        // TODO put this somewhere it makes sense and can be re-used
+        private bool ValidMove(Cell cell)
+        {
+            return cell.Contents.Type == PawnType.Empty && cell.BoardType != CellType.Wall && cell.BoardType != CellType.Void;
         }
 
         public bool IsConnectedTo(int x, int y)
         {
-            // FIXME: implement me, check if this cell is connected to the new cell through orthogonal movements (flood fill?)
-            return true;
+            // TODO could be faster but it doesn't really matter for this game
+            return ConnectedCells()
+                .Where(cell => cell.x == x && cell.y == y)
+                .Any();
         }
     }
 }
