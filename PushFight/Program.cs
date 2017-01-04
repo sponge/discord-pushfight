@@ -71,6 +71,8 @@ namespace PushFight
 
             var team = game.CurrentTeam;
 
+            GamePrinter.Print(game);
+
             while (true)
             {
                 Console.ForegroundColor = team == Team.Black ? ConsoleColor.Red : ConsoleColor.Blue;

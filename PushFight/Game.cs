@@ -151,9 +151,11 @@ namespace PushFight
                 { () => { return team != CurrentTeam; }, ECode.WrongTeam },
                 { () => { return x <= 0 || x >= 5; }, ECode.InvalidLocation },
                 { () => { return y < 0 || y > 9; }, ECode.InvalidLocation },
+                { () => { return Board[x,y].BoardType != CellType.Solid; }, ECode.InvalidLocation },
                 { () => { return (team == Team.White && y > 4) || (team == Team.Black && y < 5); }, ECode.WrongHalf },
-                { () => { return remaining.Count == 0; }, ECode.NotEnoughPieces },
                 { () => { return Board[x,y].Contents.Type != PawnType.Empty; }, ECode.CellNotEmpty },
+                { () => { return remaining.Count == 0; }, ECode.NotEnoughPieces },
+
             });
             var ecode = checker.Run();
 
