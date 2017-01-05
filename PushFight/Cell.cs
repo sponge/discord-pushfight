@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace PushFight
@@ -62,13 +63,83 @@ namespace PushFight
             return res;
         }
 
+        public void MoveContents(int x, int y)
+        {
+            var newCell = Game.Board[x, y];
+            newCell.Contents = Contents;
+            ClearContents();
+        }
+
+        public ECode CanPush(Direction dir)
+        {
+            var next = GetNextCell(dir);
+            if (next == null)
+            {
+                return ECode.CantPushNull;
+            }
+
+            if (next.BoardType == CellType.Wall)
+            {
+                return ECode.CantPushWall;
+            }
+
+            if (next.Contents.Type == PawnType.Empty)
+            {
+                return ECode.Success;
+            }
+
+            if (next.Anchored == true)
+            {
+                return ECode.CantPushAnchored;
+            }
+
+            var ecode = next.CanPush(dir);
+            if (ecode != ECode.Success)
+            {
+                return ecode;
+            }
+
+            return ECode.Success;
+        }
+
         public ECode Push(Direction dir)
         {
+            var nextCell = GetNextCell(dir);
+            if (nextCell.Contents.Team != Team.None)
+            {
+                nextCell.Push(dir);
+            }
+
+            MoveContents(nextCell.x, nextCell.y);
+
+
+            return ECode.Success;
+        }
+
+        public ECode StartPush(Direction dir)
+        {
             var sweep = Sweep(dir);
+            Cell startCell = this;
 
-            // need a whole lot of checks here
+            // start checking from the first cell adjacent to another piece instead of allowing the player to push an empty cell
+            if (GetNextCell(dir).Contents.Type == PawnType.Empty)
+            {
+                startCell = sweep.Where(cell => cell.GetNextCell(dir).Contents.Type != PawnType.Empty).First();
+            }
 
-            // set anchor and remove old anchor
+            var ecode = startCell.CanPush(dir);
+
+            if (ecode != ECode.Success)
+            {
+                return ecode;
+            }
+
+            if (startCell != this)
+            {
+                MoveContents(startCell.x, startCell.y);
+            }
+
+            startCell.Push(dir);
 
             return ECode.Success;
         }

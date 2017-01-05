@@ -17,7 +17,19 @@ namespace PushFight
         public static PawnType Pawn(string pawn)
         {
             var s_pawnType = pawn.ToLower();
-            return s_pawnType == "round" ? PawnType.Round : s_pawnType == "square" ? PawnType.Square : PawnType.Empty;
+            switch (s_pawnType)
+            {
+                case "round":
+                case "r":
+                    return PawnType.Round;
+
+                case "square":
+                case "s":
+                    return PawnType.Square;
+
+                default:
+                    return PawnType.Empty;
+            }
         }
 
         public static int Y(string pair)
@@ -30,6 +42,36 @@ namespace PushFight
             }
 
             return res;
+        }
+
+        public static Direction Direction(string dir)
+        {
+            var s_dir = dir.ToLower();
+            switch (s_dir)
+            {
+                case "n":
+                case "north":
+                case "u":
+                case "up":
+                    return PushFight.Direction.Up;
+                case "w":
+                case "west":
+                case "l":
+                case "left":
+                    return PushFight.Direction.Left;
+                case "e":
+                case "east":
+                case "r":
+                case "right":
+                    return PushFight.Direction.Right;
+                case "s":
+                case "south":
+                case "d":
+                case "down":
+                    return PushFight.Direction.Down;
+                default:
+                    return PushFight.Direction.None;
+            }
         }
     }
 }

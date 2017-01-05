@@ -8,7 +8,7 @@ namespace PushFight
     public enum Team : byte { None, White, Black }
     public enum PawnType : byte { Empty, Square, Round };
     public enum CellType : byte { Void, Solid, Wall };
-    public enum Direction : byte { Up, Down, Left, Right };
+    public enum Direction : byte { None, Up, Down, Left, Right };
     public enum GamePhase : byte { Placement, Push, Complete };
     public enum ECode : byte {
         Success,
@@ -18,13 +18,18 @@ namespace PushFight
         NotEnoughPieces,
         WrongHalf,
         CellIsEmpty,
-        InvalidPushStart,
+        WrongPushType,
+        WrongPawnTeam,
         CellNotEmpty,
         NoMoreMoves,
         CellNotConnected,
+        CantPushWall,
+        CantPushNull,
+        CantPushAnchored,
         InputUnknownCommand,
         InputBadPawnType,
         InputBadCell,
+        GameOver,
     };
 
     struct Pawn
@@ -81,6 +86,8 @@ namespace PushFight
         public int RemainingMoves = 2;
         public Team Winner = Team.None;
 
+        private Cell lastAnchored;
+
         public PushFightGame()
         {
             for (int x = 0; x < Board.GetLength(0); x++)
@@ -92,6 +99,26 @@ namespace PushFight
             }
         }
 
+        public bool ScanGameEnded()
+        {
+            for (int x = 0; x < Board.GetLength(0); x++)
+            {
+                for (int y = 0; y < Board.GetLength(1); y++)
+                {
+                    var cell = Board[x, y];
+                    if (cell.BoardType == CellType.Void && cell.Contents.Team != Team.None)
+                    {
+                        Phase = GamePhase.Complete;
+                        Winner = cell.Contents.Team == Team.Black ? Team.White : Team.Black;
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+
+        }
+
         public ECode ValidatedMove(int x, int y, int nx, int ny, Team team)
         {
             var checks = new List<ErrCheck>()
@@ -99,15 +126,20 @@ namespace PushFight
                 () => { return Phase != GamePhase.Push ? ECode.WrongPhase : ECode.Success; },
                 () => { return team != CurrentTeam ? ECode.WrongTeam : ECode.Success; },
                 () => { return RemainingMoves == 0 ? ECode.NoMoreMoves : ECode.Success; },
+
+                // check start space
                 () => { return x <= 0 || x >= 5 ? ECode.InvalidLocation : ECode.Success; },
                 () => { return y < 0 || y > 9 ? ECode.InvalidLocation : ECode.Success; },
                 () => { return Board[x,y].Contents.Type == PawnType.Empty ? ECode.CellIsEmpty : ECode.Success; },
                 () => { return Board[x,y].Contents.Team != CurrentTeam ? ECode.WrongTeam : ECode.Success; ;},
 
+                // check if new space is valid
                 () => { return nx <= 0 || nx >= 5 ? ECode.InvalidLocation : ECode.Success; },
                 () => { return ny< 0 || ny> 9 ? ECode.InvalidLocation : ECode.Success; },
                 () => { return Board[nx, ny].BoardType == CellType.Void ? ECode.InvalidLocation : ECode.Success; },
                 () => { return Board[nx, ny].Contents.Type != PawnType.Empty ? ECode.CellNotEmpty : ECode.Success; },
+
+                // check connection to new space
                 () => { return Board[x, y].IsConnectedTo(nx, ny) == false ? ECode.CellNotConnected : ECode.Success; },
             };
 
@@ -121,10 +153,7 @@ namespace PushFight
             }
 
             var cell = Board[x, y];
-            var newCell = Board[nx, ny];
-
-            newCell.Contents = cell.Contents;
-            cell.ClearContents();
+            cell.MoveContents(nx, ny);
             RemainingMoves -= 1;
 
             return ECode.Success;
@@ -177,9 +206,8 @@ namespace PushFight
                 () => { return team != CurrentTeam ? ECode.WrongTeam : ECode.Success; },
                 () => { return x <= 0 || x >= 5 ? ECode.InvalidLocation : ECode.Success; },
                 () => { return y < 0 || y > 9 ? ECode.InvalidLocation : ECode.Success; },
-                () => { return (team == Team.White && y > 4) || (team == Team.Black && y < 5) ? ECode.WrongHalf : ECode.Success; },
-                () => { return Board[x, y].Contents.Team == Team.None ? ECode.CellIsEmpty : ECode.Success; },
-                () => { return Board[x, y].Contents.Type != PawnType.Square ? ECode.InvalidPushStart : ECode.Success; },
+                () => { return Board[x, y].Contents.Team != team ? ECode.WrongPawnTeam : ECode.Success; },
+                () => { return Board[x, y].Contents.Type != PawnType.Square ? ECode.WrongPushType : ECode.Success; },
 
             };
             foreach (var check in checks)
@@ -193,13 +221,23 @@ namespace PushFight
 
             var cell = Board[x, y];
 
-            var ecode = cell.Push(dir);
+            var anchoredCell = cell.GetNextCell(dir);
+            var ecode = cell.StartPush(dir);
             if (ecode != ECode.Success)
             {
                 return ecode;
             }
 
             CurrentTeam = CurrentTeam == Team.White ? Team.Black : Team.White;
+
+            anchoredCell.Anchored = true;
+            if (lastAnchored != null)
+            {
+                lastAnchored.Anchored = false;
+            }
+            lastAnchored = anchoredCell;
+
+            ScanGameEnded();
 
             return ECode.Success;
         }
@@ -214,13 +252,23 @@ namespace PushFight
 
         public ECode Input(string input, Team team)
         {
-            var cmd = input.Split(' ');
+            var cmd = input.ToLower().Split(' ');
 
             ResetHighlight();
 
+            if (Phase == GamePhase.Complete)
+            {
+                return ECode.GameOver;
+            }
+
+            // allow "p" to overload between place and push
+            if (cmd[0] == "p")
+            {
+                cmd[0] = Phase == GamePhase.Placement ? "place" : "push";
+            }
+
             switch (cmd[0])
             {
-                case "pl":
                 case "place":
                     {
                         var pawn = Parsers.Pawn(cmd[1]);
@@ -262,6 +310,15 @@ namespace PushFight
 
                         return ValidatedMove(x, y, nx, ny, team);
                     }
+
+                case "push":
+                    {
+                        var x = Parsers.X(cmd[1]);
+                        var y = Parsers.Y(cmd[1]);
+                        var dir = Parsers.Direction(cmd[2]);
+                        return ValidatedPush(x, y, team, dir);
+                    }
+
 
                 default:
                     return ECode.InputUnknownCommand;

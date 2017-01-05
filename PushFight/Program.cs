@@ -1,13 +1,53 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+
 
 namespace PushFight
 {
-    class GamePrinter
+    class ConsoleClient
     {
-        static public void Print(PushFightGame game)
+        public PushFightGame game;
+        public Team team;
+
+        public ConsoleClient(PushFightGame game)
         {
+            this.game = game;
+            this.team = game.CurrentTeam;
+        }
+
+        public void Command(String cmd)
+        {
+            var result = game.Input(cmd, team);
+            Console.WriteLine(result);
+            Console.WriteLine();
+            team = game.CurrentTeam;
+        }
+
+        public void PrintPrompt()
+        {
+            Console.ForegroundColor = team == Team.Black ? ConsoleColor.DarkGray : ConsoleColor.White;
+            Console.Write(team + " " + game.Phase + "> ");
+        }
+
+        public void Print()
+        {
+            if (game.Phase == GamePhase.Placement)
+            {
+                Console.Write("■:" + game.RemainingPieces.Where(r => r.Team == game.CurrentTeam && r.PawnType == PawnType.Square).First().Count);
+                Console.Write(" o:" + game.RemainingPieces.Where(r => r.Team == game.CurrentTeam && r.PawnType == PawnType.Round).First().Count);
+                Console.WriteLine();
+            }
+            else if (game.Phase == GamePhase.Push)
+            {
+                Console.WriteLine("Moves: " + game.RemainingMoves);
+            }
+            else
+            {
+                Console.WriteLine("Game Over");
+                Console.WriteLine(game.Winner + " Wins!");
+            }
             Console.WriteLine("  abcd");
             for (int y = 1; y < game.Board.GetLength(1) - 1; y++)
             {
@@ -20,9 +60,10 @@ namespace PushFight
 
                     if (cell.Contents.Team != Team.None)
                     {
-                        Console.BackgroundColor = cellColor;
+                        Console.BackgroundColor = cell.Anchored ? ConsoleColor.DarkRed : (cell.BoardType == CellType.Void && cell.Contents.Team != Team.None) ? ConsoleColor.Red : cellColor;
                         Console.Write(cell.Contents.Type == PawnType.Empty ? " " : cell.Contents.Type == PawnType.Square ? "■" : "o");
-                    } else
+                    }
+                    else
                     {
                         Console.ForegroundColor = cellColor;
                         Console.Write(cell.BoardType == CellType.Solid ? "█" : cell.BoardType == CellType.Wall ? "│" : " ");
@@ -43,14 +84,13 @@ namespace PushFight
 
             var game = new PushFightGame();
 
-            var team = game.CurrentTeam;
+            var client = new ConsoleClient(game);
 
-            GamePrinter.Print(game);
+            client.Print();
 
             while (true)
             {
-                Console.ForegroundColor = team == Team.Black ? ConsoleColor.DarkGray : ConsoleColor.White;
-                Console.Write(team + "> ");
+                client.PrintPrompt();
                 var cmd = Console.ReadLine();
                 Console.ResetColor();
 
@@ -73,28 +113,33 @@ namespace PushFight
                         "place square d5",
                         "place square c3",
                         "place square c6",
+                        "p d4 d",
+                        "p b5 u",
+                        "p d5 d",
+                        "p b4 u",
+                        "p d6 d",
                     };
 
                     foreach (var autocmd in cmds)
                     {
-                        var ecode = game.Input(autocmd, game.CurrentTeam);
-                        Debug.Assert(ecode == ECode.Success);
-                        GamePrinter.Print(game);
+                        client.PrintPrompt();
+                        Console.WriteLine(autocmd);
+                        Console.ResetColor();
+                        client.Command(autocmd);
+                        client.Print();
                     }
+
                     continue;
                 }
 
                 if (cmd == "switch")
                 {
-                    team = team == Team.White ? Team.Black : Team.White;
+                    client.team = client.team == Team.White ? Team.Black : Team.White;
                     continue;
                 }
 
-                var result = game.Input(cmd, team);
-                Console.WriteLine(result);
-                team = game.CurrentTeam;
-
-                GamePrinter.Print(game);
+                client.Command(cmd);
+                client.Print();
             }
 
         }
