@@ -47,7 +47,7 @@ class ImageRenderer
         }
     }
 
-    public void Render(PushFightGame game, string filename)
+    public void Render(PushFightGame game, Stream outStream)
     {
         var output = new Image(Board.Width, Board.Height);
 
@@ -90,11 +90,7 @@ class ImageRenderer
             }
         }
 
-
-        using (FileStream outfile = File.OpenWrite(filename))
-        {
-            output.Save(outfile);
-        }
+        output.Save(outStream);
     }
 }
 
@@ -127,7 +123,10 @@ class Program
         foreach (var autocmd in cmds)
         {
             game.Input(autocmd, game.CurrentTeam);
-            imgr.Render(game, "zzout_" + i + ".png");
+            using (FileStream outfile = File.OpenWrite("zzout_" + i + ".png"))
+            {
+                imgr.Render(game, outfile);
+            }
             i++;
         }
     }
