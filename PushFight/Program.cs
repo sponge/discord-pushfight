@@ -35,7 +35,7 @@ namespace PushFight
         {
             if (game.Phase == GamePhase.Placement)
             {
-                Console.Write("■:" + game.RemainingPieces.Where(r => r.Team == game.CurrentTeam && r.PawnType == PawnType.Square).First().Count);
+                Console.Write("x:" + game.RemainingPieces.Where(r => r.Team == game.CurrentTeam && r.PawnType == PawnType.Square).First().Count);
                 Console.Write(" o:" + game.RemainingPieces.Where(r => r.Team == game.CurrentTeam && r.PawnType == PawnType.Round).First().Count);
                 Console.WriteLine();
             }
@@ -61,12 +61,17 @@ namespace PushFight
                     if (cell.Contents.Team != Team.None)
                     {
                         Console.BackgroundColor = cell.Anchored ? ConsoleColor.DarkRed : (cell.BoardType == CellType.Void && cell.Contents.Team != Team.None) ? ConsoleColor.Red : cellColor;
-                        Console.Write(cell.Contents.Type == PawnType.Empty ? " " : cell.Contents.Type == PawnType.Square ? "■" : "o");
+                        Console.Write(cell.Contents.Type == PawnType.Empty ? " " : cell.Contents.Type == PawnType.Square ? "x" : "o");
                     }
                     else
                     {
-                        Console.ForegroundColor = cellColor;
-                        Console.Write(cell.BoardType == CellType.Solid ? "█" : cell.BoardType == CellType.Wall ? "│" : " ");
+                        if ( cell.BoardType != CellType.Wall)
+                        {
+                            Console.ForegroundColor = cellColor;
+                            Console.BackgroundColor = cell.BoardType == CellType.Void ? ConsoleColor.Black : cellColor;
+                        }
+
+                        Console.Write(cell.BoardType == CellType.Wall ? "|" : " ");
                     }
 
                     Console.ResetColor();
