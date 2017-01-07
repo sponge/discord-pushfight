@@ -5,24 +5,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
-
-class GameSession
-{
-    public PushFight.PushFightGame Game;
-    public Discord.IChannel Channel;
-    public Dictionary<PushFight.Team, IUser> Players;
-
-    public GameSession(IChannel channel, IUser whitePlayer, IUser blackPlayer)
-    {
-        Game = new PushFight.PushFightGame();
-        Channel = channel;
-        Players = new Dictionary<PushFight.Team, IUser>()
-        {
-            { PushFight.Team.White, whitePlayer },
-            { PushFight.Team.Black, blackPlayer },
-        };
-    }
-}
+using DiscordBot;
 
 class Program
 {
@@ -56,8 +39,9 @@ class Program
             if (message.Content.StartsWith("."))
             {
                 var arg = message.Content.Substring(1).Split(' ');
+                arg[0] = arg[0].ToLower();
 
-                if (arg[0].ToLower() == "challenge")
+                if (arg[0] == "challenge")
                 {
                     var challenger = message.Author;
                     var guild = (message.Channel as SocketGuildChannel).Guild;
@@ -65,8 +49,26 @@ class Program
                     var channelName = "pf-" + challenger.Username + "-v-" + challenged.Username;
                     var newChannel = await guild.CreateTextChannelAsync(channelName);
                     var sess = new GameSession(newChannel, challenger, challenged);
+
                     sessions.Add(newChannel.Id, sess);
-                    await message.Channel.SendMessageAsync("Channel created! Head on into #" + newChannel.Name +" to get started!");
+                    await message.Channel.SendMessageAsync("Channel created! Head on into " + newChannel.Mention +" to get started!");
+
+                    var img = imgr.Render(sess.Game);
+                    // TODO print status
+                    await newChannel.SendFileAsync(img, "board.png", "");
+                    // TODO print help
+                }
+                else if (arg[0] == "end")
+                {
+                    // TODO destroy the data, await task.delay 15 seconds, delete the channel
+                }
+                else if (arg[0] == "reset")
+                {
+                    // TODO reset the game state
+                }
+                else if (arg[0] == "help")
+                {
+                    // TODO print help
                 }
                 else
                 {
@@ -86,6 +88,7 @@ class Program
 
                     var ecode = sess.Game.Input(String.Join(" ", arg), sess.Game.CurrentTeam);
                     var img = imgr.Render(sess.Game);
+
                     await message.Channel.SendFileAsync(img, "board.png", ecode.ToString());
                 }
                 
@@ -94,6 +97,7 @@ class Program
 
         await client.LoginAsync(TokenType.Bot, token);
         await client.ConnectAsync();
+        Console.WriteLine("Connected and active!");
         await Task.Delay(-1);
     }
 }
