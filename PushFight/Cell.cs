@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace PushFight
 {
-    class Cell
+    public class Cell
     {
         public int x, y;
         public CellType BoardType;

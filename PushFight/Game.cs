@@ -32,7 +32,7 @@ namespace PushFight
         GameOver,
     };
 
-    struct Pawn
+    public struct Pawn
     {
         public Pawn(Team team, PawnType type)
         {
@@ -44,7 +44,7 @@ namespace PushFight
         public Team Team;
     }
 
-    class RemainingPieces
+    public class RemainingPieces
     {
         public Team Team;
         public PawnType PawnType;
@@ -58,7 +58,7 @@ namespace PushFight
         }
     }
 
-    class PushFightGame
+    public class PushFightGame
     {
 
         public List<RemainingPieces> RemainingPieces = new List<RemainingPieces>() 
@@ -72,12 +72,12 @@ namespace PushFight
         // rotated so [x,y] is how you access it
         public int[,] BoardBase = {
                    /*y0 .. y9*/
-            /*x0*/ {0, 0, 2, 2, 2, 2, 2, 0, 0, 0},
-                   {0, 0, 1, 1, 1, 1, 1, 0, 0, 0},
-                   {0, 1, 1, 1, 1, 1, 1, 1, 1, 0},
-                   {0, 1, 1, 1, 1, 1, 1, 1, 1, 0},
+            /*x0*/ {0, 0, 0, 2, 2, 2, 2, 2, 0, 0},
                    {0, 0, 0, 1, 1, 1, 1, 1, 0, 0},
-            /*x5*/ {0, 0, 0, 2, 2, 2, 2, 2, 0, 0}
+                   {0, 1, 1, 1, 1, 1, 1, 1, 1, 0},
+                   {0, 1, 1, 1, 1, 1, 1, 1, 1, 0},
+                   {0, 0, 1, 1, 1, 1, 1, 0, 0, 0},
+            /*x5*/ {0, 0, 2, 2, 2, 2, 2, 0, 0, 0}
         };
 
         public Cell[,] Board = new Cell[6, 10];

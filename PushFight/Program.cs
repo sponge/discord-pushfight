@@ -121,8 +121,6 @@ namespace PushFight
                         "p d4 d",
                         "p b5 u",
                         "p d5 d",
-                        "p b4 u",
-                        "p d6 d",
                     };
 
                     foreach (var autocmd in cmds)
