@@ -27,12 +27,16 @@ class GameSession
 class Program
 {
 
-    static void Main(string[] args) => new Program().Run(args).GetAwaiter().GetResult();
+    static void Main(string[] args)
+    {
+        new Program().RunAsync(args).GetAwaiter().GetResult();
+    }
+
     private DiscordSocketClient client;
     private ImageRenderer.ImageRenderer imgr;
     private Dictionary<ulong, GameSession> sessions;
 
-    public async Task Run(string[] args)
+    public async Task RunAsync(string[] args)
     {
         client = new DiscordSocketClient();
         var game = new PushFight.PushFightGame();
@@ -77,6 +81,7 @@ class Program
                     if (message.Author != checkUser)
                     {
                         await message.Channel.SendMessageAsync("it's not your turn dummy");
+                        return;
                     }
 
                     var ecode = sess.Game.Input(String.Join(" ", arg), sess.Game.CurrentTeam);
