@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using ImageSharp;
 using PushFight;
 using System.IO;
+using ImageSharp.Drawing.Shapes;
 
 class ImageRenderer
 {
@@ -58,6 +59,13 @@ class ImageRenderer
             {
                 var cell = game.Board[x, y];
 
+                var pos = new Point((int)(88.5 * y), (int)(91 * x) - 23);
+
+                if (cell.Highlight)
+                {
+                    output.Fill(new Color(255, 255, 0, 90), new RectangularPolygon(new Rectangle(pos.X, pos.Y, 88, 91)));
+                }
+
                 if (cell.Contents.Type == PawnType.Empty)
                 {
                     continue;
@@ -73,13 +81,11 @@ class ImageRenderer
                     img = cell.Contents.Type == PawnType.Round ? WhiteRound : WhiteSquare;
                 }
 
-                var pos = new Point((int)(88.5 * y) + 4, (int)(91 * x) - 23);
-
-                output.DrawImage(img, 100, new Size(img.Width, img.Height), pos);
+                output.DrawImage(img, 100, new Size(img.Width, img.Height), new Point(pos.X + 4, pos.Y));
 
                 if (cell.Anchored)
                 {
-                    output.DrawImage(Anchor, 100, new Size(Anchor.Width, Anchor.Height), new Point(pos.X + 13, pos.Y + 13));
+                    output.DrawImage(Anchor, 100, new Size(Anchor.Width, Anchor.Height), new Point(pos.X + 17, pos.Y + 13));
                 }
             }
         }
@@ -111,6 +117,7 @@ class Program
                         "place square d5",
                         "place square c3",
                         "place square c6",
+                        "m d4",
                         "p d4 d",
                         "p b5 u",
                         "p d5 d",
