@@ -19,6 +19,21 @@ class Program
     private ImageRenderer.ImageRenderer imgr;
     private Dictionary<ulong, GameSession> sessions;
 
+    public async Task SendGameStatus(IMessageChannel channel, GameSession sess)
+    {      
+        var img = imgr.Render(sess.Game);
+        var status = (sess.LastStatus != PushFight.ECode.Success ? sess.LastStatus.ToString() : "");
+        // TODO print player's turn, hilight them
+        status += sess.Game.Phase.ToString();
+        // TODO print a better status
+        await channel.SendFileAsync(img, "board.png", status);
+    }
+
+    public async Task SendGameHelp(IMessageChannel channel, GameSession sess)
+    {
+        await channel.SendMessageAsync("TODO: help text goes here");
+    }
+
     public async Task RunAsync(string[] args)
     {
         client = new DiscordSocketClient();
@@ -34,6 +49,11 @@ class Program
 
         var token = args[0];
 
+        client.ChannelDestroyed += async (channel) =>
+        {
+            // TODO: check if it was one of our channels and destroy the game session
+        };
+
         client.MessageReceived += async (message) =>
         {
             if (message.Content.StartsWith("."))
@@ -48,48 +68,46 @@ class Program
                     var challenged = message.MentionedUsers.First();
                     var channelName = "pf-" + challenger.Username + "-v-" + challenged.Username;
                     var newChannel = await guild.CreateTextChannelAsync(channelName);
-                    var sess = new GameSession(newChannel, challenger, challenged);
 
+                    var sess = new GameSession(challenger, challenged);
                     sessions.Add(newChannel.Id, sess);
+
                     await message.Channel.SendMessageAsync("Channel created! Head on into " + newChannel.Mention +" to get started!");
 
-                    var img = imgr.Render(sess.Game);
-                    // TODO print status
-                    await newChannel.SendFileAsync(img, "board.png", "");
-                    // TODO print help
-                }
-                else if (arg[0] == "end")
+                    await SendGameStatus(message.Channel, sess);
+                    await SendGameHelp(message.Channel, sess);
+                } else if (sessions.ContainsKey(message.Channel.Id))
                 {
-                    // TODO destroy the data, await task.delay 15 seconds, delete the channel
-                }
-                else if (arg[0] == "reset")
-                {
-                    // TODO reset the game state
-                }
-                else if (arg[0] == "help")
-                {
-                    // TODO print help
-                }
-                else
-                {
-                    if (!sessions.ContainsKey(message.Channel.Id)) {
-                        return;
-                    }
-
                     var sess = sessions[message.Channel.Id];
-                    // do this in a roundabout way so you can test by playing yourself
-                    var checkUser = sess.Players[sess.Game.CurrentTeam];
 
-                    if (message.Author != checkUser)
+                    if (arg[0] == "end")
                     {
-                        await message.Channel.SendMessageAsync("it's not your turn dummy");
-                        return;
+                        // TODO destroy the data, await task.delay 15 seconds, delete the channel
                     }
+                    else if (arg[0] == "reset")
+                    {
+                        // TODO reset the game state
+                    }
+                    else if (arg[0] == "help")
+                    {
 
-                    var ecode = sess.Game.Input(String.Join(" ", arg), sess.Game.CurrentTeam);
-                    var img = imgr.Render(sess.Game);
+                        await SendGameHelp(message.Channel, sess);
+                    }
+                    else
+                    {
+                        // map teams to players instead of players to teams so you can challenge and play yourself
+                        var checkUser = sess.Players[sess.Game.CurrentTeam];
 
-                    await message.Channel.SendFileAsync(img, "board.png", ecode.ToString());
+                        if (message.Author != checkUser)
+                        {
+                            await message.Channel.SendMessageAsync("it's not your turn dummy");
+                            return;
+                        }
+
+                        sess.LastStatus = sess.Game.Input(String.Join(" ", arg), sess.Game.CurrentTeam);
+
+                        await SendGameStatus(message.Channel, sess);
+                    }
                 }
                 
             }

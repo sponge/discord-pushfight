@@ -10,45 +10,12 @@ namespace ImageRenderer
 {
     public class ImageRenderer
     {
-        Image Board;
-        Image BlackRound;
-        Image BlackSquare;
-        Image WhiteRound;
-        Image WhiteSquare;
-        Image Anchor;
-
-        public ImageRenderer()
-        {
-            using (var infile = File.OpenRead("img/board.png"))
-            {
-                Board = new Image(infile);
-            }
-
-            using (var infile = File.OpenRead("img/br.png"))
-            {
-                BlackRound = new Image(infile);
-            }
-
-            using (var infile = File.OpenRead("img/bs.png"))
-            {
-                BlackSquare = new Image(infile);
-            }
-
-            using (var infile = File.OpenRead("img/wr.png"))
-            {
-                WhiteRound = new Image(infile);
-            }
-
-            using (var infile = File.OpenRead("img/ws.png"))
-            {
-                WhiteSquare = new Image(infile);
-            }
-
-            using (var infile = File.OpenRead("img/anchor.png"))
-            {
-                Anchor = new Image(infile);
-            }
-        }
+        Image Board = new Image(File.ReadAllBytes("img/board.png"));
+        Image BlackRound = new Image(File.ReadAllBytes("img/br.png"));
+        Image BlackSquare = new Image(File.ReadAllBytes("img/bs.png"));
+        Image WhiteRound = new Image(File.ReadAllBytes("img/wr.png"));
+        Image WhiteSquare = new Image(File.ReadAllBytes("img/ws.png"));
+        Image Anchor = new Image(File.ReadAllBytes("img/anchor.png"));
 
         public MemoryStream Render(PushFightGame game)
         {

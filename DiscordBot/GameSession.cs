@@ -8,14 +8,12 @@ namespace DiscordBot
     class GameSession
     {
         public PushFight.PushFightGame Game;
-        public Discord.IChannel Channel;
         public Dictionary<PushFight.Team, IUser> Players;
-        public PushFight.ECode lastStatus;
+        public PushFight.ECode LastStatus;
 
-        public GameSession(IChannel channel, IUser whitePlayer, IUser blackPlayer)
+        public GameSession(IUser whitePlayer, IUser blackPlayer)
         {
             Game = new PushFight.PushFightGame();
-            Channel = channel;
             Players = new Dictionary<PushFight.Team, IUser>()
         {
             { PushFight.Team.White, whitePlayer },
