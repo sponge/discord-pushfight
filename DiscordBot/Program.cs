@@ -20,7 +20,7 @@ class Program
     private ImageRenderer.ImageRenderer imgr;
     private Dictionary<ulong, GameSession> sessions;
 
-    public async Task SendGameStatus(IMessageChannel channel, GameSession sess)
+    public async Task SendGameStatusAsync(IMessageChannel channel, GameSession sess)
     {      
         var img = imgr.Render(sess.Game);
         var player = sess.Players[sess.Game.CurrentTeam];
@@ -31,7 +31,7 @@ class Program
             status += sess.Game.Phase == GamePhase.Placement ? "place a pawn." : "push.";
         } else
         {
-            status += "Game Over!";
+            status += "Game Over! " + sess.Players[sess.Game.Winner].Mention + " wins!";
         }
         status += "\n";
 
@@ -47,9 +47,14 @@ class Program
         }
 
         await channel.SendFileAsync(img, "board.png", status);
+
+        if (sess.Game.Phase == GamePhase.Complete)
+        {
+            await channel.SendMessageAsync("Type .rematch to play again.");
+        }
     }
 
-    public async Task SendGameHelp(IMessageChannel channel, GameSession sess)
+    public async Task SendGameHelpAsync(IMessageChannel channel, GameSession sess)
     {
         await channel.SendMessageAsync("TODO: help text goes here");
     }
@@ -74,6 +79,7 @@ class Program
             if (!sessions.ContainsKey(channel.Id))
             {
                 sessions.Remove(channel.Id);
+                await Task.Delay(1); // FIXME: vs complains about no awaits but there's no need for one
             }
         };
 
@@ -97,8 +103,8 @@ class Program
 
                     await message.Channel.SendMessageAsync("Channel created! Head on into " + newChannel.Mention +" to get started!");
 
-                    await SendGameStatus(newChannel, sess);
-                    await SendGameHelp(newChannel, sess);
+                    await SendGameStatusAsync(newChannel, sess);
+                    await SendGameHelpAsync(newChannel, sess);
                 } else if (sessions.ContainsKey(message.Channel.Id))
                 {
                     var sess = sessions[message.Channel.Id];
@@ -107,14 +113,17 @@ class Program
                     {
                         // TODO destroy the data, await task.delay 15 seconds, delete the channel
                     }
-                    else if (arg[0] == "reset")
+                    else if (arg[0] == "rematch")
                     {
-                        // TODO reset the game state
+                        sess.Game = new PushFightGame();
+                        sess.LastStatus = ECode.Success;
+                        await message.Channel.SendMessageAsync("Restarting match.");
+                        await SendGameStatusAsync(message.Channel, sess);
                     }
                     else if (arg[0] == "help")
                     {
 
-                        await SendGameHelp(message.Channel, sess);
+                        await SendGameHelpAsync(message.Channel, sess);
                     }
                     else
                     {
@@ -129,7 +138,7 @@ class Program
 
                         sess.LastStatus = sess.Game.Input(String.Join(" ", arg), sess.Game.CurrentTeam);
 
-                        await SendGameStatus(message.Channel, sess);
+                        await SendGameStatusAsync(message.Channel, sess);
                     }
                 }
                 
