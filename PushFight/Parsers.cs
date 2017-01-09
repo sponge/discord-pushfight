@@ -7,7 +7,7 @@ namespace PushFight
         public static int X(string pair)
         {
             var res = (int)pair[0];
-            if (res < 'a' || res > 'd')
+            if (res < 'a' || res > 'h')
             {
                 return -1;
             }

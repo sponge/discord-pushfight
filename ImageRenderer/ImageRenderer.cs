@@ -29,7 +29,7 @@ namespace ImageRenderer
                 {
                     var cell = game.Board[x, y];
 
-                    var pos = new Point((int)(88.5 * y), (int)(91 * x) - 23);
+                    var pos = new Point((int)(88.5 * x), (int)(91 * y) - 23);
 
                     if (cell.Highlight)
                     {

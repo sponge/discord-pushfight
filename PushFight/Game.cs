@@ -71,16 +71,19 @@ namespace PushFight
 
         // rotated so [x,y] is how you access it
         public int[,] BoardBase = {
-                   /*y0 .. y9*/
-            /*x0*/ {0, 0, 0, 2, 2, 2, 2, 2, 0, 0},
-                   {0, 0, 0, 1, 1, 1, 1, 1, 0, 0},
-                   {0, 1, 1, 1, 1, 1, 1, 1, 1, 0},
-                   {0, 1, 1, 1, 1, 1, 1, 1, 1, 0},
-                   {0, 0, 1, 1, 1, 1, 1, 0, 0, 0},
-            /*x5*/ {0, 0, 2, 2, 2, 2, 2, 0, 0, 0}
+            {0, 0, 0, 0, 0, 0},
+            {0, 0, 1, 1, 0, 0},
+            {0, 0, 1, 1, 1, 2},
+            {2, 1, 1, 1, 1, 2},
+            {2, 1, 1, 1, 1, 2},
+            {2, 1, 1, 1, 1, 2},
+            {2, 1, 1, 1, 1, 2},
+            {2, 1, 1, 1, 0, 0},
+            {0, 0, 1, 1, 0, 0},
+            {0, 0, 0, 0, 0, 0}
         };
 
-        public Cell[,] Board = new Cell[6, 10];
+        public Cell[,] Board = new Cell[10, 6];
         public GamePhase Phase;
         public Team CurrentTeam = Team.White;
         public int RemainingMoves = 2;
@@ -128,14 +131,14 @@ namespace PushFight
                 () => { return RemainingMoves == 0 ? ECode.NoMoreMoves : ECode.Success; },
 
                 // check start space
-                () => { return x <= 0 || x >= 5 ? ECode.InvalidLocation : ECode.Success; },
-                () => { return y < 0 || y > 9 ? ECode.InvalidLocation : ECode.Success; },
+                () => { return x <= 0 || x >= Board.GetLength(0) ? ECode.InvalidLocation : ECode.Success; },
+                () => { return y < 0 || y > Board.GetLength(1) ? ECode.InvalidLocation : ECode.Success; },
                 () => { return Board[x,y].Contents.Type == PawnType.Empty ? ECode.CellIsEmpty : ECode.Success; },
                 () => { return Board[x,y].Contents.Team != CurrentTeam ? ECode.WrongTeam : ECode.Success; ;},
 
                 // check if new space is valid
-                () => { return nx <= 0 || nx >= 5 ? ECode.InvalidLocation : ECode.Success; },
-                () => { return ny< 0 || ny> 9 ? ECode.InvalidLocation : ECode.Success; },
+                () => { return nx <= 0 || nx >= Board.GetLength(0) ? ECode.InvalidLocation : ECode.Success; },
+                () => { return ny < 0 || ny > Board.GetLength(1) ? ECode.InvalidLocation : ECode.Success; },
                 () => { return Board[nx, ny].BoardType == CellType.Void ? ECode.InvalidLocation : ECode.Success; },
                 () => { return Board[nx, ny].Contents.Type != PawnType.Empty ? ECode.CellNotEmpty : ECode.Success; },
 
@@ -167,10 +170,10 @@ namespace PushFight
             {
                 () => { return Phase != GamePhase.Placement ? ECode.WrongPhase : ECode.Success; },
                 () => { return team != CurrentTeam ? ECode.WrongTeam : ECode.Success; },
-                () => { return x <= 0 || x >= 5 ? ECode.InvalidLocation : ECode.Success; },
-                () => { return y < 0 || y > 9 ? ECode.InvalidLocation : ECode.Success; },
+                () => { return x <= 0 || x >= Board.GetLength(0) ? ECode.InvalidLocation : ECode.Success; },
+                () => { return y < 0 || y >= Board.GetLength(1) ? ECode.InvalidLocation : ECode.Success; },
                 () => { return Board[x,y].BoardType != CellType.Solid ? ECode.InvalidLocation : ECode.Success; },
-                () => { return (team == Team.White && y > 4) || (team == Team.Black && y < 5) ? ECode.WrongHalf : ECode.Success; },
+                () => { return (team == Team.White && x > 4) || (team == Team.Black && x < 5) ? ECode.WrongHalf : ECode.Success; },
                 () => { return Board[x,y].Contents.Type != PawnType.Empty ? ECode.CellNotEmpty : ECode.Success; },
                 () => { return remaining.Count == 0 ? ECode.NotEnoughPieces : ECode.Success; },
             };
@@ -204,8 +207,8 @@ namespace PushFight
             var checks = new List<ErrCheck> {
                 () => { return Phase != GamePhase.Push ? ECode.WrongPhase : ECode.Success; },
                 () => { return team != CurrentTeam ? ECode.WrongTeam : ECode.Success; },
-                () => { return x <= 0 || x >= 5 ? ECode.InvalidLocation : ECode.Success; },
-                () => { return y < 0 || y > 9 ? ECode.InvalidLocation : ECode.Success; },
+                () => { return x <= 0 || x >= Board.GetLength(0) ? ECode.InvalidLocation : ECode.Success; },
+                () => { return y < 0 || y > Board.GetLength(1) ? ECode.InvalidLocation : ECode.Success; },
                 () => { return Board[x, y].Contents.Team != team ? ECode.WrongPawnTeam : ECode.Success; },
                 () => { return Board[x, y].Contents.Type != PawnType.Square ? ECode.WrongPushType : ECode.Success; },
 
@@ -229,6 +232,7 @@ namespace PushFight
             }
 
             CurrentTeam = CurrentTeam == Team.White ? Team.Black : Team.White;
+            RemainingMoves = 2;
 
             anchoredCell.Anchored = true;
             if (lastAnchored != null)

@@ -11,20 +11,20 @@ class Program
 
         var cmds = new List<string>
                     {
-                        "place round a4",
-                        "place round a5",
-                        "place square b4",
-                        "place square b5",
-                        "place round c4",
-                        "place round c5",
+                        "place round d1",
+                        "place round e1",
+                        "place square d2",
+                        "place square e2",
+                        "place round d3",
+                        "place round e3",
                         "place square d4",
-                        "place square d5",
-                        "place square c3",
-                        "place square c6",
-                        "m d4",
-                        "p d4 d",
-                        "p b5 u",
-                        "p d5 d",
+                        "place square e4",
+                        "place square c1",
+                        "place square f4",
+                        "move c1",
+                        "push c1 right",
+                        "push e2 left",
+                        "push d4 right"
                     };
 
         int i = 0;
@@ -34,6 +34,7 @@ class Program
             using (FileStream outfile = File.OpenWrite("zzout_" + i + ".png"))
             {
                 var img = imgr.Render(game);
+                img.CopyTo(outfile);
             }
             i++;
         }
