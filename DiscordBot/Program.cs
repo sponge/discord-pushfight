@@ -80,7 +80,7 @@ class Program
                 break;
 
             case GamePhase.Complete:
-                output = "Type .rematch to play again, or .end to end this session and remove the channel.";
+                output = "Type .rematch to play again, .swap to swap teams and play again, or .end to end this session and remove the channel.";
                 break;
 
             default:
@@ -145,45 +145,55 @@ class Program
                     // these commands are only available from game channels
                     var sess = sessions[message.Channel.Id];
 
-                    if (arg[0] == "end")
+                    switch (arg[0])
                     {
-                        await message.Channel.SendMessageAsync("Ending game, and removing channel in 10 seconds. Thanks for playing!");
-                        sessions.Remove(message.Channel.Id);
-                        await Task.Delay(10000);
-                        await (message.Channel as SocketGuildChannel).DeleteAsync();
-                    }
-                    else if (arg[0] == "rematch")
-                    {
-                        sess.Game = new PushFightGame();
-                        sess.LastStatus = ECode.Success;
-                        sess.LastPhase = GamePhase.Invalid;
-                        await message.Channel.SendMessageAsync("Restarting match.");
-                        await SendGameStatusAsync(message.Channel, sess);
-                    }
-                    else if (arg[0] == "help")
-                    {
-                        await SendGameHelpAsync(message.Channel, sess);
-                    }
-                    else // it's not a special command, just pass it on to the pushfight instance
-                    {
-                        // map teams to players instead of players to teams so you can challenge and play yourself
-                        var checkUser = sess.Players[sess.Game.CurrentTeam];
+                        case "end":
+                        case "quit":
+                            await message.Channel.SendMessageAsync("Ending game, and removing channel in 10 seconds. Thanks for playing!");
+                            sessions.Remove(message.Channel.Id);
+                            await Task.Delay(10000);
+                            await (message.Channel as SocketGuildChannel).DeleteAsync();
+                            break;
 
-                        if (message.Author != checkUser)
-                        {
-                            await message.Channel.SendMessageAsync("it's not your turn dummy");
-                            return;
-                        }
+                        case "rematch":
+                        case "restart":
+                            sess.Restart();
+                            await message.Channel.SendMessageAsync("Restarting match.");
+                            await SendGameStatusAsync(message.Channel, sess);
+                            break;
 
-                        sess.LastStatus = sess.Game.Input(String.Join(" ", arg), sess.Game.CurrentTeam);
+                        case "swap":
+                            sess.SwapTeams();
+                            sess.Restart();
+                            await message.Channel.SendMessageAsync("Swapping teams and restarting match.");
+                            await SendGameStatusAsync(message.Channel, sess);
+                            break;
 
-                        if (sess.LastStatus != ECode.Success)
-                        {
-                            await message.Channel.SendMessageAsync("**Error: " + PushFightGame.GetError(sess.LastStatus) + "**");
-                            return;
-                        }
+                        case "help":
+                            await SendGameHelpAsync(message.Channel, sess);
+                            break;
 
-                        await SendGameStatusAsync(message.Channel, sess);
+                        default:
+                            // it's not a special command, just pass it on to the pushfight instance
+                            // map teams to players instead of players to teams so you can challenge and play yourself
+                            var checkUser = sess.Players[sess.Game.CurrentTeam];
+
+                            if (message.Author != checkUser)
+                            {
+                                await message.Channel.SendMessageAsync("it's not your turn dummy");
+                                break;
+                            }
+
+                            sess.LastStatus = sess.Game.Input(String.Join(" ", arg), sess.Game.CurrentTeam);
+
+                            if (sess.LastStatus != ECode.Success)
+                            {
+                                await message.Channel.SendMessageAsync("**Error: " + PushFightGame.GetError(sess.LastStatus) + "**");
+                                break;
+                            }
+
+                            await SendGameStatusAsync(message.Channel, sess);
+                            break;
                     }
                 }
                 

@@ -2,24 +2,42 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using PushFight;
 
 namespace DiscordBot
 {
     class GameSession
     {
-        public PushFight.PushFightGame Game;
-        public Dictionary<PushFight.Team, IUser> Players;
-        public PushFight.ECode LastStatus;
-        public PushFight.GamePhase LastPhase;
+        public PushFightGame Game;
+        public Dictionary<Team, IUser> Players;
+        public ECode LastStatus;
+        public GamePhase LastPhase;
 
         public GameSession(IUser whitePlayer, IUser blackPlayer)
         {
-            Game = new PushFight.PushFightGame();
-            Players = new Dictionary<PushFight.Team, IUser>()
+            Game = new PushFightGame();
+            Players = new Dictionary<Team, IUser>()
+            {
+                { Team.White, whitePlayer },
+                { Team.Black, blackPlayer },
+            };
+        }
+
+        public void SwapTeams()
         {
-            { PushFight.Team.White, whitePlayer },
-            { PushFight.Team.Black, blackPlayer },
-        };
+            var newPlayers = new Dictionary<Team, IUser>()
+            {
+                {Team.Black, Players[Team.White]},
+                {Team.White, Players[Team.Black]},
+            };
+            Players = newPlayers;
+        }
+
+        public void Restart()
+        {
+            Game = new PushFightGame();
+            LastStatus = ECode.Success;
+            LastPhase = GamePhase.Invalid;
         }
     }
 }
