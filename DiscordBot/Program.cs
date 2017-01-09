@@ -34,7 +34,7 @@ class Program
         {
             status += "Game Over! " + sess.Players[sess.Game.Winner].Mention + " wins!";
         }
-        status += "\n";
+        status += "\n\n";
 
         // 2nd line: appropriate metadata pertaining to phase (pieces left to place, moves left)
         if (sess.Game.Phase == GamePhase.Placement)
@@ -65,12 +65,26 @@ class Program
         string output;
         switch (sess.Game.Phase)
         {
+            case GamePhase.Placement:
+                output = @"Place your pawns on your half of the board. White starts on the left, Black on the right.
+
+.__p__lace (__r__ound|__s__quare) cell
+";
+                break;
+
+            case GamePhase.Push:
+                output = @"Move up to two pawns to any connected cell, and then push a square piece.
+
+.__m__ove start-cell end-cell
+.__p__ush cell (__u__p|__d__own|__l__eft|__r__ight)";
+                break;
+
             case GamePhase.Complete:
                 output = "Type .rematch to play again, or .end to end this session and remove the channel.";
                 break;
 
             default:
-                output = "TODO: help text goes here";
+                output = "No help for phase "+ sess.Game.Phase.ToString();
                 break;
         }
 
@@ -104,6 +118,7 @@ class Program
                 var arg = message.Content.Substring(1).Split(' ');
                 arg[0] = arg[0].ToLower();
 
+                // only challenge can be issued from all text channels
                 if (arg[0] == "challenge")
                 {
                     var challenger = message.Author;
@@ -119,6 +134,7 @@ class Program
                     await SendGameStatusAsync(newChannel, sess);
                 } else if (sessions.ContainsKey(message.Channel.Id))
                 {
+                    // these commands are only available from game channels
                     var sess = sessions[message.Channel.Id];
 
                     if (arg[0] == "end")
@@ -140,7 +156,7 @@ class Program
                     {
                         await SendGameHelpAsync(message.Channel, sess);
                     }
-                    else
+                    else // it's not a special command, just pass it on to the pushfight instance
                     {
                         // map teams to players instead of players to teams so you can challenge and play yourself
                         var checkUser = sess.Players[sess.Game.CurrentTeam];
