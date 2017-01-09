@@ -45,7 +45,7 @@ class Program
         }
         else if (sess.Game.Phase == GamePhase.Push)
         {
-            status += String.Format("{0} moves remaining.\n", sess.Game.RemainingMoves);
+            status += String.Format("{0} move{1} remaining.\n", sess.Game.RemainingMoves, sess.Game.RemainingMoves > 1 ? "s" : "");
         }
 
         // send the board image, with the prefix message
@@ -176,6 +176,12 @@ class Program
                         }
 
                         sess.LastStatus = sess.Game.Input(String.Join(" ", arg), sess.Game.CurrentTeam);
+
+                        if (sess.LastStatus != ECode.Success)
+                        {
+                            await message.Channel.SendMessageAsync("**Error: " + PushFightGame.GetError(sess.LastStatus) + "**");
+                            return;
+                        }
 
                         await SendGameStatusAsync(message.Channel, sess);
                     }

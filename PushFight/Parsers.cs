@@ -21,6 +21,7 @@ namespace PushFight
             {
                 case "round":
                 case "r":
+                case "c":
                     return PawnType.Round;
 
                 case "square":

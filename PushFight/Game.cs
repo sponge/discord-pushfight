@@ -91,6 +91,38 @@ namespace PushFight
 
         private Cell lastAnchored;
 
+        private static Dictionary<ECode, string> errors = new Dictionary<ECode, string>()
+        {
+            {ECode.Success, "Success!"},
+            {ECode.InvalidLocation, "Location is not valid."},
+            {ECode.WrongTeam, "It is not your turn."},
+            {ECode.WrongPhase, "Not a valid command for this phase."},
+            {ECode.NotEnoughPieces, "Out of pawns of that type."},
+            {ECode.WrongHalf, "Can only place pawns on your half of the board."},
+            {ECode.CellIsEmpty, "The selected cell is empty"},
+            {ECode.WrongPushType, "Can only push starting from a square pawn."},
+            {ECode.WrongPawnTeam, "That pawn is not on your team."},
+            {ECode.CellNotEmpty, "The selected cell is not empty."},
+            {ECode.NoMoreMoves, "No more moves remaining."},
+            {ECode.CellNotConnected, "Can only move cells to cells that are connected by empty spaces."},
+            {ECode.CantPushWall, "A wall is blocking the push."},
+            {ECode.CantPushNull, "A NULL is blocking the push???"},
+            {ECode.CantPushAnchored, "Can't push a piece that is anchored."},
+            {ECode.InputUnknownCommand, "Unknown command."},
+            {ECode.InputBadPawnType, "Unknown pawn type, please specify either \"round\" or \"square\""},
+            {ECode.InputBadCell, "Unknown cell. Cells are specified using a letter first, and then a number."},
+            {ECode.GameOver, "Game Over!"},
+        };
+        static public string GetError(ECode err)
+        {
+            string errStr;
+            if (!errors.TryGetValue(err, out errStr))
+            {
+                errStr = err.ToString();
+            }
+            return errStr;
+        }
+
         public PushFightGame()
         {
             Phase = GamePhase.Placement;
@@ -289,7 +321,14 @@ namespace PushFight
                             return ECode.InputBadCell;
                         }
 
-                        return ValidatedPlace(x, y, team, pawn);
+                        var ecode = ValidatedPlace(x, y, team, pawn);
+
+                        if (ecode == ECode.Success)
+                        {
+                            Board[x, y].Highlight = true;
+                        }
+
+                        return ecode;
                     }
 
                 case "m":
