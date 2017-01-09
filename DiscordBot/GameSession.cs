@@ -10,6 +10,7 @@ namespace DiscordBot
         public PushFight.PushFightGame Game;
         public Dictionary<PushFight.Team, IUser> Players;
         public PushFight.ECode LastStatus;
+        public PushFight.GamePhase LastPhase;
 
         public GameSession(IUser whitePlayer, IUser blackPlayer)
         {

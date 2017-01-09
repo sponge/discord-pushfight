@@ -9,7 +9,7 @@ namespace PushFight
     public enum PawnType : byte { Empty, Square, Round };
     public enum CellType : byte { Void, Solid, Wall };
     public enum Direction : byte { None, Up, Down, Left, Right };
-    public enum GamePhase : byte { Placement, Push, Complete };
+    public enum GamePhase : byte { Invalid, Placement, Push, Complete };
     public enum ECode : byte {
         Success,
         InvalidLocation,
@@ -93,6 +93,7 @@ namespace PushFight
 
         public PushFightGame()
         {
+            Phase = GamePhase.Placement;
             for (int x = 0; x < Board.GetLength(0); x++)
             {
                 for (int y = 0; y < Board.GetLength(1); y++)

@@ -25,6 +25,7 @@ class Program
         var img = imgr.Render(sess.Game);
         var player = sess.Players[sess.Game.CurrentTeam];
 
+        // prefix message: error if exists, who's turn, and what they need to do
         var status = (sess.LastStatus != ECode.Success ? "**"+ sess.LastStatus.ToString() +"**\n" : "");
         if (sess.Game.Phase != GamePhase.Complete) {
             status += player.Mention + "'s turn to ";
@@ -35,6 +36,7 @@ class Program
         }
         status += "\n";
 
+        // 2nd line: appropriate metadata pertaining to phase (pieces left to place, moves left)
         if (sess.Game.Phase == GamePhase.Placement)
         {
             var round = sess.Game.RemainingPieces.Where(r => r.Team == sess.Game.CurrentTeam && r.PawnType == PawnType.Round).First().Count;
@@ -46,23 +48,38 @@ class Program
             status += String.Format("{0} moves remaining.\n", sess.Game.RemainingMoves);
         }
 
+        // send the board image, with the prefix message
         await channel.SendFileAsync(img, "board.png", status);
 
-        if (sess.Game.Phase == GamePhase.Complete)
+        // 2nd message for anything that should go after board
+        if (sess.Game.Phase != sess.LastPhase)
         {
-            await channel.SendMessageAsync("Type .rematch to play again.");
+            // print out help if the phase changed
+            await SendGameHelpAsync(channel, sess);
+            sess.LastPhase = sess.Game.Phase;
         }
     }
 
     public async Task SendGameHelpAsync(IMessageChannel channel, GameSession sess)
     {
-        await channel.SendMessageAsync("TODO: help text goes here");
+        string output;
+        switch (sess.Game.Phase)
+        {
+            case GamePhase.Complete:
+                output = "Type .rematch to play again, or .end to end this session and remove the channel.";
+                break;
+
+            default:
+                output = "TODO: help text goes here";
+                break;
+        }
+
+        await channel.SendMessageAsync(output);     
     }
 
     public async Task RunAsync(string[] args)
     {
         client = new DiscordSocketClient();
-        var game = new PushFightGame();
         imgr = new ImageRenderer.ImageRenderer();
         sessions = new Dictionary<ulong, GameSession>();
 
@@ -76,11 +93,8 @@ class Program
 
         client.ChannelDestroyed += async (channel) =>
         {
-            if (!sessions.ContainsKey(channel.Id))
-            {
-                sessions.Remove(channel.Id);
-                await Task.Delay(1); // FIXME: vs complains about no awaits but there's no need for one
-            }
+            sessions.Remove(channel.Id);
+            await Task.Delay(1); // FIXME: vs complains about no awaits but there's no need for one
         };
 
         client.MessageReceived += async (message) =>
@@ -102,27 +116,28 @@ class Program
                     sessions.Add(newChannel.Id, sess);
 
                     await message.Channel.SendMessageAsync("Channel created! Head on into " + newChannel.Mention +" to get started!");
-
                     await SendGameStatusAsync(newChannel, sess);
-                    await SendGameHelpAsync(newChannel, sess);
                 } else if (sessions.ContainsKey(message.Channel.Id))
                 {
                     var sess = sessions[message.Channel.Id];
 
                     if (arg[0] == "end")
                     {
-                        // TODO destroy the data, await task.delay 15 seconds, delete the channel
+                        await message.Channel.SendMessageAsync("Ending game, and removing channel in 10 seconds. Thanks for playing!");
+                        sessions.Remove(message.Channel.Id);
+                        await Task.Delay(10000);
+                        await (message.Channel as SocketGuildChannel).DeleteAsync();
                     }
                     else if (arg[0] == "rematch")
                     {
                         sess.Game = new PushFightGame();
                         sess.LastStatus = ECode.Success;
+                        sess.LastPhase = GamePhase.Invalid;
                         await message.Channel.SendMessageAsync("Restarting match.");
                         await SendGameStatusAsync(message.Channel, sess);
                     }
                     else if (arg[0] == "help")
                     {
-
                         await SendGameHelpAsync(message.Channel, sess);
                     }
                     else
