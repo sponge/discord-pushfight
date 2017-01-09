@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using DiscordBot;
+using PushFight;
 
 class Program
 {
@@ -22,10 +23,29 @@ class Program
     public async Task SendGameStatus(IMessageChannel channel, GameSession sess)
     {      
         var img = imgr.Render(sess.Game);
-        var status = (sess.LastStatus != PushFight.ECode.Success ? sess.LastStatus.ToString() : "");
-        // TODO print player's turn, hilight them
-        status += sess.Game.Phase.ToString();
-        // TODO print a better status
+        var player = sess.Players[sess.Game.CurrentTeam];
+
+        var status = (sess.LastStatus != ECode.Success ? "**"+ sess.LastStatus.ToString() +"**\n" : "");
+        if (sess.Game.Phase != GamePhase.Complete) {
+            status += player.Mention + "'s turn to ";
+            status += sess.Game.Phase == GamePhase.Placement ? "place a pawn." : "push.";
+        } else
+        {
+            status += "Game Over!";
+        }
+        status += "\n";
+
+        if (sess.Game.Phase == GamePhase.Placement)
+        {
+            var round = sess.Game.RemainingPieces.Where(r => r.Team == sess.Game.CurrentTeam && r.PawnType == PawnType.Round).First().Count;
+            var square = sess.Game.RemainingPieces.Where(r => r.Team == sess.Game.CurrentTeam && r.PawnType == PawnType.Square).First().Count;
+            status += String.Format("Pieces Remaining: ⚪: {0}, ⬜: {1}\n", round, square);
+        }
+        else if (sess.Game.Phase == GamePhase.Push)
+        {
+            status += String.Format("{0} moves remaining.\n", sess.Game.RemainingMoves);
+        }
+
         await channel.SendFileAsync(img, "board.png", status);
     }
 
@@ -37,7 +57,7 @@ class Program
     public async Task RunAsync(string[] args)
     {
         client = new DiscordSocketClient();
-        var game = new PushFight.PushFightGame();
+        var game = new PushFightGame();
         imgr = new ImageRenderer.ImageRenderer();
         sessions = new Dictionary<ulong, GameSession>();
 
@@ -51,7 +71,10 @@ class Program
 
         client.ChannelDestroyed += async (channel) =>
         {
-            // TODO: check if it was one of our channels and destroy the game session
+            if (!sessions.ContainsKey(channel.Id))
+            {
+                sessions.Remove(channel.Id);
+            }
         };
 
         client.MessageReceived += async (message) =>
@@ -74,8 +97,8 @@ class Program
 
                     await message.Channel.SendMessageAsync("Channel created! Head on into " + newChannel.Mention +" to get started!");
 
-                    await SendGameStatus(message.Channel, sess);
-                    await SendGameHelp(message.Channel, sess);
+                    await SendGameStatus(newChannel, sess);
+                    await SendGameHelp(newChannel, sess);
                 } else if (sessions.ContainsKey(message.Channel.Id))
                 {
                     var sess = sessions[message.Channel.Id];
