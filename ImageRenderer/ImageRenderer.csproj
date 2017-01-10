@@ -11,6 +11,7 @@
     <Content Include="img\anchor.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="img\arrow.png" />
     <Content Include="img\board.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
