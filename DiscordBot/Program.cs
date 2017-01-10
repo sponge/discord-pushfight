@@ -76,6 +76,7 @@ class Program
                 output = @"Move up to two pawns to any connected cell, and then push a square piece.
 .__m__ove start-cell - show all valid moves for the given cell.
 .__m__ove start-cell end-cell
+.__u__ndo
 .__p__ush cell (__u__p|__d__own|__l__eft|__r__ight)";
                 break;
 
