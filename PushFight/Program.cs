@@ -41,7 +41,7 @@ namespace PushFight
             }
             else if (game.Phase == GamePhase.Push)
             {
-                Console.WriteLine("Moves: " + game.RemainingMoves);
+                Console.WriteLine("Moves: " + game.Moves.Remaining);
             }
             else
             {
@@ -118,9 +118,10 @@ namespace PushFight
                         "place square e4",
                         "place square c1",
                         "place square f4",
-                        "push c1 right",
-                        "push e2 left",
-                        "push d4 right"
+                        "mv c1 c3",
+                        //"push c1 right",
+                        //"push e2 left",
+                        //"push d4 right"
 
                     };
 

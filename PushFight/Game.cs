@@ -29,6 +29,7 @@ namespace PushFight
         InputUnknownCommand,
         InputBadPawnType,
         InputBadCell,
+        NothingToUndo,
         GameOver,
     };
 
@@ -83,11 +84,12 @@ namespace PushFight
             {0, 0, 0, 0, 0, 0}
         };
 
-        public Cell[,] Board = new Cell[10, 6];
+        public Cell[,] Board;
         public GamePhase Phase;
         public Team CurrentTeam = Team.White;
-        public int RemainingMoves = 2;
+        public Moves Moves = new Moves(2);
         public Team Winner = Team.None;
+        public List<TurnEvent> LastTurnEvents = new List<TurnEvent>();
 
         private Cell lastAnchored;
 
@@ -111,6 +113,7 @@ namespace PushFight
             {ECode.InputUnknownCommand, "Unknown command."},
             {ECode.InputBadPawnType, "Unknown pawn type, please specify either \"round\" or \"square\""},
             {ECode.InputBadCell, "Unknown cell. Cells are specified using a letter first, and then a number."},
+            {ECode.NothingToUndo, "Nothing to undo." },
             {ECode.GameOver, "Game Over!"},
         };
         static public string GetError(ECode err)
@@ -125,6 +128,7 @@ namespace PushFight
 
         public PushFightGame()
         {
+            Board = new Cell[BoardBase.GetLength(0), BoardBase.GetLength(1)];
             Phase = GamePhase.Placement;
             for (int x = 0; x < Board.GetLength(0); x++)
             {
@@ -161,7 +165,7 @@ namespace PushFight
             {
                 () => { return Phase != GamePhase.Push ? ECode.WrongPhase : ECode.Success; },
                 () => { return team != CurrentTeam ? ECode.WrongTeam : ECode.Success; },
-                () => { return RemainingMoves == 0 ? ECode.NoMoreMoves : ECode.Success; },
+                () => { return Moves.Remaining == 0 ? ECode.NoMoreMoves : ECode.Success; },
 
                 // check start space
                 () => { return x <= 0 || x >= Board.GetLength(0) ? ECode.InvalidLocation : ECode.Success; },
@@ -190,7 +194,7 @@ namespace PushFight
 
             var cell = Board[x, y];
             cell.MoveContents(nx, ny);
-            RemainingMoves -= 1;
+            Moves.Track(x, y, nx, ny);
 
             return ECode.Success;
         }
@@ -265,7 +269,9 @@ namespace PushFight
             }
 
             CurrentTeam = CurrentTeam == Team.White ? Team.Black : Team.White;
-            RemainingMoves = 2;
+
+            Moves.List.ForEach((m) => LastTurnEvents.Add(new TurnEvent(TurnEventType.Move, m.x1, m.y1, m.x2, m.y2)));
+            Moves.Reset();
 
             anchoredCell.Anchored = true;
             if (lastAnchored != null)
@@ -292,6 +298,7 @@ namespace PushFight
             var cmd = input.ToLower().Split(' ');
 
             ResetHighlight();
+            LastTurnEvents.Clear();
 
             if (Phase == GamePhase.Complete)
             {
