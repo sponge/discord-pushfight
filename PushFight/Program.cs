@@ -17,12 +17,13 @@ namespace PushFight
             this.team = game.CurrentTeam;
         }
 
-        public void Command(String cmd)
+        public ECode Command(String cmd)
         {
             var result = game.Input(cmd, team);
-            Console.WriteLine(result);
+            Console.WriteLine(PushFightGame.GetError(result));
             Console.WriteLine();
             team = game.CurrentTeam;
+            return result;
         }
 
         public void PrintPrompt()
@@ -145,8 +146,11 @@ namespace PushFight
                     continue;
                 }
 
-                client.Command(cmd);
-                client.Print();
+                if (client.Command(cmd) == ECode.Success)
+                {
+                    client.Print();
+                }
+                
             }
 
         }

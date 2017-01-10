@@ -241,7 +241,31 @@ namespace PushFight
             return ECode.Success;
         }
 
-        public ECode ValidatedPush(int x, int y, Team team, Direction dir)
+        public ECode ValidatedUndo(Team team)
+        {
+            var checks = new List<ErrCheck> {
+                () => { return Phase != GamePhase.Push ? ECode.WrongPhase : ECode.Success; },
+                () => { return team != CurrentTeam ? ECode.WrongTeam : ECode.Success; },
+                () => { return Moves.List.Count == 0 ? ECode.NothingToUndo : ECode.Success; },
+            };
+
+            foreach (var check in checks)
+            {
+                var ret = check();
+                if (ret != ECode.Success)
+                {
+                    return ret;
+                }
+            }
+
+            var move = Moves.Pop();
+
+            Board[move.x2, move.y2].MoveContents(move.x1, move.y1);
+
+            return ECode.Success;
+        }
+
+            public ECode ValidatedPush(int x, int y, Team team, Direction dir)
         {
             var checks = new List<ErrCheck> {
                 () => { return Phase != GamePhase.Push ? ECode.WrongPhase : ECode.Success; },
@@ -371,6 +395,9 @@ namespace PushFight
                         return ValidatedPush(x, y, team, dir);
                     }
 
+                case "undo":
+                case "u":
+                    return ValidatedUndo(team);
 
                 default:
                     return ECode.InputUnknownCommand;

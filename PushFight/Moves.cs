@@ -37,16 +37,17 @@ namespace PushFight
             List.Add(new Move(x1, y1, x2, y2));
         }
 
-        public ECode Undo()
+        public Move Pop()
         {
             if (List.Count == 0)
             {
-                return ECode.NothingToUndo;
+                return null;
             }
 
             Remaining += 1;
+            var popped = List[List.Count - 1];
             List.RemoveAt(List.Count - 1);
-            return ECode.Success;
+            return popped;
         }
 
         public void Reset()
