@@ -118,11 +118,8 @@ namespace PushFight
         };
         static public string GetError(ECode err)
         {
-            string errStr;
-            if (!errors.TryGetValue(err, out errStr))
-            {
-                errStr = err.ToString();
-            }
+            string errStr = err.ToString();
+            errors.TryGetValue(err, out errStr);
             return errStr;
         }
 

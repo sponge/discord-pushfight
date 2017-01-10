@@ -19,6 +19,34 @@ namespace ImageRenderer
         Image Anchor = new Image(File.ReadAllBytes("img/anchor.png"));
         Image Arrow = new Image(File.ReadAllBytes("img/arrow.png"));
 
+        private Point ToPixels(Point cell)
+        {
+            return new Point((int)(88.5 * cell.X), (int)(91 * cell.Y) - 23); ;
+        }
+
+        private void DrawHighlight(PushFightGame game, Image output, Point cell)
+        {
+            var px = ToPixels(cell);
+            output.Fill(new Color(255, 255, 0, 90), new RectangularPolygon(new Rectangle(px.X, px.Y, 88, 91)));
+        }
+
+        private void DrawPath(PushFightGame game, Image output, Point startCell, Point endCell) {
+            var startpx = ToPixels(startCell);
+            var endpx = ToPixels(endCell);
+            output.DrawLines(new ImageSharp.Drawing.Pens.Pen(Color.Black, 2.0f), new[] {
+                            new Vector2(startpx.X + WhiteSquare.Width/2, startpx.Y + WhiteSquare.Height/2),
+                            new Vector2(endpx.X + WhiteSquare.Width/2, endpx.Y + WhiteSquare.Height/2)
+                        });
+        }
+
+        private void DrawArrow(PushFightGame game, Image output, Point cell, Direction dir)
+        {
+            var px = ToPixels(cell);
+            var arr = new Image(Arrow);
+            arr.Rotate(dir == Direction.Right ? 0 : dir == Direction.Down ? 90 : dir == Direction.Left ? 180 : 270);
+            output.DrawImage(arr, 100, new Size(arr.Width, arr.Height), px);
+        }
+
 
         public MemoryStream Render(PushFightGame game)
         {
@@ -28,26 +56,18 @@ namespace ImageRenderer
 
             foreach (var ev in game.LastTurnEvents)
             {
-                var pos1 = new Point((int)(88.5 * ev.x1), (int)(91 * ev.y1) - 23);
-                var pos2 = new Point((int)(88.5 * ev.x2), (int)(91 * ev.y2) - 23);
-
                 switch (ev.Type)
                 {
                     case TurnEventType.Place:
-                        output.Fill(new Color(255, 255, 0, 90), new RectangularPolygon(new Rectangle(pos1.X, pos1.Y, 88, 91)));
+                        DrawHighlight(game, output, new Point(ev.x1, ev.y1));
                         break;
 
                     case TurnEventType.Move:
-                        output.DrawLines(new ImageSharp.Drawing.Pens.Pen(Color.Black, 2.0f), new[] {
-                            new Vector2(pos1.X + WhiteSquare.Width/2, pos1.Y + WhiteSquare.Height/2),
-                            new Vector2(pos2.X + WhiteSquare.Width/2, pos2.Y + WhiteSquare.Height/2)
-                        });
+                        DrawPath(game, output, new Point(ev.x1, ev.y1), new Point(ev.x2, ev.y2));
                         break;
 
                     case TurnEventType.Push:
-                        var arr = new Image(Arrow);
-                        arr.Rotate(ev.Direction == Direction.Right ? 0 : ev.Direction == Direction.Down ? 90 : ev.Direction == Direction.Left ? 180 : 270);
-                        output.DrawImage(arr, 100, new Size(arr.Width, arr.Height), pos1);
+                        DrawArrow(game, output, new Point(ev.x1, ev.y1), ev.Direction);
                         break;
                 }
             }
@@ -58,11 +78,11 @@ namespace ImageRenderer
                 {
                     var cell = game.Board[x, y];
 
-                    var pos = new Point((int)(88.5 * x), (int)(91 * y) - 23);
+                    var pos = ToPixels(new Point(x, y));
 
                     if (cell.Highlight)
                     {
-                        output.Fill(new Color(255, 255, 0, 90), new RectangularPolygon(new Rectangle(pos.X, pos.Y, 88, 91)));
+                        DrawHighlight(game, output, new Point(x, y));
                     }
 
                     if (cell.Contents.Type == PawnType.Empty)
