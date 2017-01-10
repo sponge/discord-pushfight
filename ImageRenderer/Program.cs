@@ -22,9 +22,12 @@ class Program
                         "place square c1",
                         "place square f4",
                         "move c1",
-                        "push c1 right",
-                        "push e2 left",
-                        "push d4 right"
+                        "move c1 b4",
+                        "move d2 c2",
+                        "push c2 right",
+                        "push e4 left",
+                        "push d4 up",
+                        "push e2 down",
                     };
 
         int i = 0;

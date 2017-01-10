@@ -116,16 +116,23 @@ namespace PushFight
             return ECode.Success;
         }
 
-        public ECode StartPush(Direction dir)
+        public Cell FindFirstClear(Direction dir)
         {
             var sweep = Sweep(dir);
             Cell startCell = this;
 
-            // start checking from the first cell adjacent to another piece instead of allowing the player to push an empty cell
             if (GetNextCell(dir).Contents.Type == PawnType.Empty)
             {
                 startCell = sweep.Where(cell => cell.GetNextCell(dir).Contents.Type != PawnType.Empty).First();
             }
+
+            return startCell;
+        }
+
+        public ECode StartPush(Direction dir)
+        {
+            // start checking from the first cell adjacent to another piece instead of allowing the player to push an empty cell
+            var startCell = FindFirstClear(dir);
 
             var ecode = startCell.CanPush(dir);
 
