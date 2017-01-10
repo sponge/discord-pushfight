@@ -78,6 +78,8 @@ namespace PushFight
                 }
                 Console.Write("\r\n");
             }
+            Console.WriteLine("Last Events:");
+            game.LastTurnEvents.ForEach((ev) => Console.WriteLine(ev.Type.ToString()));
             Console.Write("\r\n");
         }
     }

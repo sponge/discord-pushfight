@@ -236,6 +236,8 @@ namespace PushFight
                 Phase = GamePhase.Push;
             }
 
+            LastTurnEvents.Add(new TurnEvent(TurnEventType.Place, x, y));
+
             return ECode.Success;
         }
 
@@ -281,6 +283,8 @@ namespace PushFight
             lastAnchored = anchoredCell;
 
             ScanGameEnded();
+
+            LastTurnEvents.Add(new TurnEvent(TurnEventType.Push, x, y, dir));
 
             return ECode.Success;
         }
@@ -329,11 +333,6 @@ namespace PushFight
                         }
 
                         var ecode = ValidatedPlace(x, y, team, pawn);
-
-                        if (ecode == ECode.Success)
-                        {
-                            Board[x, y].Highlight = true;
-                        }
 
                         return ecode;
                     }
