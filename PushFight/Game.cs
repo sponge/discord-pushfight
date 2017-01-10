@@ -264,9 +264,11 @@ namespace PushFight
             var cell = Board[x, y];
 
             var anchoredCell = cell.FindFirstClear(dir).GetNextCell(dir);
+
             var ecode = cell.StartPush(dir);
             if (ecode != ECode.Success)
             {
+                // this is actually really bad because right now the board has changed
                 return ecode;
             }
 

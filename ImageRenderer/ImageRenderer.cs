@@ -39,8 +39,8 @@ namespace ImageRenderer
 
                     case TurnEventType.Move:
                         output.DrawLines(new ImageSharp.Drawing.Pens.Pen(Color.Black, 2.0f), new[] {
-                            new Vector2(pos1.X + 30, pos1.Y + 30),
-                            new Vector2(pos2.X + 30, pos2.Y + 30)
+                            new Vector2(pos1.X + WhiteSquare.Width/2, pos1.Y + WhiteSquare.Height/2),
+                            new Vector2(pos2.X + WhiteSquare.Width/2, pos2.Y + WhiteSquare.Height/2)
                         });
                         break;
 
