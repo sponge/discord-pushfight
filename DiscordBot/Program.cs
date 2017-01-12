@@ -45,7 +45,11 @@ class Program
         }
         else if (sess.Game.Phase == GamePhase.Push)
         {
-            status += String.Format("{0} move{1} remaining.\n", sess.Game.Moves.Remaining, sess.Game.Moves.Remaining > 1 ? "s" : "");
+            if (sess.Game.Moves.Remaining == 0)
+            {
+                status += "No moves remaining.\n";
+            }
+            status += String.Format("{0} move{1} remaining.\n", sess.Game.Moves.Remaining, sess.Game.Moves.Remaining != 1 ? "s" : "");
         }
 
         // send the board image, with the prefix message
