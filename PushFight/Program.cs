@@ -121,7 +121,7 @@ namespace PushFight
                         "place square e4",
                         "place square c1",
                         "place square f4",
-                        "mv c1 c3",
+                        "mv c1 a3",
                         //"push c1 right",
                         //"push e2 left",
                         //"push d4 right"

@@ -26,6 +26,7 @@ namespace PushFight
         CantPushWall,
         CantPushNull,
         CantPushAnchored,
+        CantPushEmpty,
         InputUnknownCommand,
         InputBadPawnType,
         InputBadCell,
@@ -109,6 +110,7 @@ namespace PushFight
             {ECode.CellNotConnected, "Can only move cells to cells that are connected by empty spaces."},
             {ECode.CantPushWall, "A wall is blocking the push."},
             {ECode.CantPushNull, "A NULL is blocking the push???"},
+            {ECode.CantPushEmpty, "A push must push at least one piece."},
             {ECode.CantPushAnchored, "Can't push a piece that is anchored."},
             {ECode.InputUnknownCommand, "Unknown command."},
             {ECode.InputBadPawnType, "Unknown pawn type, please specify either \"round\" or \"square\""},
@@ -118,9 +120,8 @@ namespace PushFight
         };
         static public string GetError(ECode err)
         {
-            string errStr = err.ToString();
-            errors.TryGetValue(err, out errStr);
-            return errStr;
+            var errExists = errors.TryGetValue(err, out string errStr);
+            return errExists ? errStr : err.ToString();
         }
 
         public PushFightGame()
@@ -271,8 +272,12 @@ namespace PushFight
                 () => { return y < 0 || y > Board.GetLength(1) ? ECode.InvalidLocation : ECode.Success; },
                 () => { return Board[x, y].Contents.Team != team ? ECode.WrongPawnTeam : ECode.Success; },
                 () => { return Board[x, y].Contents.Type != PawnType.Square ? ECode.WrongPushType : ECode.Success; },
+                () => { return Board[x, y].Contents.Type != PawnType.Square ? ECode.WrongPushType : ECode.Success; },
+                () => { return Board[x, y].GetNextCell(dir).Contents.Team == Team.None ? ECode.CantPushEmpty : ECode.Success; },
+                () => { return Board[x, y].CanPush(dir); },
 
             };
+
             foreach (var check in checks)
             {
                 var ret = check();
@@ -284,14 +289,9 @@ namespace PushFight
 
             var cell = Board[x, y];
 
-            var anchoredCell = cell.FindFirstClear(dir).GetNextCell(dir);
+            var anchoredCell = cell.GetNextCell(dir);
 
-            var ecode = cell.StartPush(dir);
-            if (ecode != ECode.Success)
-            {
-                // this is actually really bad because right now the board has changed
-                return ecode;
-            }
+            cell.Push(dir);
 
             CurrentTeam = CurrentTeam == Team.White ? Team.Black : Team.White;
 

@@ -49,20 +49,6 @@ namespace PushFight
             return this;
         }
 
-        public List<Cell> Sweep(Direction dir)
-        {
-            var res = new List<Cell>();
-
-            var cell = this.GetNextCell(dir);
-            while (cell != null)
-            {
-                res.Add(cell);
-                cell = cell.GetNextCell(dir);
-            }
-
-            return res;
-        }
-
         public void MoveContents(int x, int y)
         {
             var newCell = Game.Board[x, y];
@@ -102,7 +88,7 @@ namespace PushFight
             return ECode.Success;
         }
 
-        public ECode Push(Direction dir)
+        public void Push(Direction dir)
         {
             var nextCell = GetNextCell(dir);
             if (nextCell.Contents.Team != Team.None)
@@ -111,44 +97,6 @@ namespace PushFight
             }
 
             MoveContents(nextCell.x, nextCell.y);
-
-
-            return ECode.Success;
-        }
-
-        public Cell FindFirstClear(Direction dir)
-        {
-            var sweep = Sweep(dir);
-            Cell startCell = this;
-
-            if (GetNextCell(dir).Contents.Type == PawnType.Empty)
-            {
-                startCell = sweep.Where(cell => cell.GetNextCell(dir).Contents.Type != PawnType.Empty).First();
-            }
-
-            return startCell;
-        }
-
-        public ECode StartPush(Direction dir)
-        {
-            // start checking from the first cell adjacent to another piece instead of allowing the player to push an empty cell
-            var startCell = FindFirstClear(dir);
-
-            var ecode = startCell.CanPush(dir);
-
-            if (ecode != ECode.Success)
-            {
-                return ecode;
-            }
-
-            if (startCell != this)
-            {
-                MoveContents(startCell.x, startCell.y);
-            }
-
-            startCell.Push(dir);
-
-            return ECode.Success;
         }
 
         public List<Cell> ConnectedCells()
