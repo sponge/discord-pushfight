@@ -118,6 +118,7 @@ namespace PushFight
             {ECode.NothingToUndo, "Nothing to undo." },
             {ECode.GameOver, "Game Over!"},
         };
+
         static public string GetError(ECode err)
         {
             var errExists = errors.TryGetValue(err, out string errStr);
